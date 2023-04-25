@@ -1,0 +1,1137 @@
+---
+title: "Lab 1 : Introduction to R and Quarto"
+author: "Johnny MyungWon Lee \n (Modified from Debby Lipschutz & Stuart McGurnaghan)"
+date: 2023-01-10
+date-format: "long"
+format:
+  html:
+    toc : true
+    code-line-numbers: true
+    code-link: true
+highlight-style: atom-one
+editor: visual
+---
+
+# 1. The RStudio IDE
+
+The **RStudio(.cloud) IDE** collects four panes onto one window. If you do not see four panes select `View > Panes > Show All Panes`.
+
+## 1.1 The Source Pane
+
+Typically the **Source Pane** is in the top right-hand corner. This is the pane you are viewing this file in. This pane is a text editor where you can write a variety of script files (hence the name Source as it would contain your source code). If you hover your mouse over `File > New File` you will see a list of file-types you can create in this text editor. The most simple type is the R Script. This opens a blank document in which you would type code only. This becomes useful when you start doing more complex programming as you can call and run an entire R Script with a single command. This document type, which contains both text and small chunks of executable code, is called **Quarto** or **R Markdown**. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using Markdown see **section 2.1** of this document or head to <https://quarto.org> and <http://rmarkdown.rstudio.com>.
+
+## 1.2 The Console
+
+The **Console pane** is typically below the Source pane and contains 3 tabs, Console, Terminal and Jobs. If you cannot see this pane, go to `View > Move Focus to Console`. Make sure that the Console tab is showing. This tab allows you to use R in interactive mode by typing individual commands at the command prompt.
+
+### Exercise 1.1
+
+In the console next to the R command prompt "\>" type "3 + 5" and type enter. The answer should appear below it.
+
+## 1.3 Environment, History, Files and Help
+
+The two panes on the right-hand side contain tabs displaying useful information. You already used the Files tab with the RStudio/RStudio.cloud setup instructions.
+
+The **Help** tab contains useful links with R and RStudio resources you can read for additional information. R and its packages come with help manuals. You can search these directly in the Help tab or you can use the `?` and `??` commands from the console. We will look at a manual in more detail once you've been introduced to functions. When you first start learning you might want some more general help and want to use your search engine. If you do so, start your question with "R" and be cautious, revert to official sources of information as soon as you have enough information to know where to look.
+
+The **Environment tab** is possibly one of the most useful features of the RStudio IDE. It lists all objects in your environment.
+
+### Exercise 1.2
+
+Assign the value of `3 + 5` to the object "an.object" using the assignment operator `<-`, by typing `an.object <- 3 + 5`, and press enter. By pressing `Alt + "-"`, it will automatically generate the assignment operator. Now look under the Environment tab. Create another object called `new.object` and assign the value `an.object`. What is the numeric value of `new.object`? Next, assign the value `3` to `new.object` and look under the **Environment tab**.
+
+```{r}
+# Enter code here.
+```
+
+Now select the History tab. You should see all the commands you have entered in the console listed there. You can copy any of these commands to the console or the file currently opened in the Source pane by highlighting it and selecting **To Console** or **To Source**, respectively.
+
+# 2. Getting started
+
+## 2.1 Quarto / R Markdown
+
+**Quarto** is a new markdown style document which enables you to weave together content and executable code into a finished document. **Quarto** files end in a `QMD` format whereas **R Markdown** files end in a `RMD` format. Some of you will be more familiar with **R Markdown** but **Quarto** provides better flexibility where it can combine text with executable code in various languages such as `Python`.
+
+Hence, you can embed an R code chunk like this:
+
+```{r }
+an.object <- 3 * 5
+an.object
+```
+
+If you click the green arrow on the right-hand side of the code you can run individual code chunks within your document.
+
+When you click the **Render** or **Knit** button, a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. This is very useful for generating reports and you will be expected to submit both assessments as Quarto / R Markdown files.
+
+For now, close the document you generated using `Render` or `Knit` and return to the IDE. You may notice that the **Console pane** has been minimised. This is a useful feature as you are now running R in interactive mode from within the Quarto / R Markdown file and you no longer need to view the **Console pane**. Note that the code still runs through the console.
+
+## 2.2 Notes regarding input
+
+R commands are case sensitive. If you get a function not found error, check spelling and capitalisation.
+
+The `#` symbol comments out the R code. Run the following chunk with each line muted in turn.
+
+```{r }
+#An.object
+an.object
+```
+
+Spaces have no meaning in R and can be used to make your input easier to read but should not be entered in the middle of an object name.
+
+```{r }
+#new. object  
+```
+
+```{r }
+new.object <-    5+ 2
+new.object
+```
+
+Similarly, you might want to split long commands over several lines to make it easier to read. R does not have a special character to continue reading the next line but it will do so if it considers that the command is "incomplete". A simple way to make sure that all the required lines are read is to surround your command with brackets. R will not stop reading until all the brackets are closed.
+
+```{r }
+an.object <- ((5 + new.object) 
+                              * 3)
+```
+
+Note that if you copy the first line in the console R will issue the continuation prompt `+` indicating that the command is **incomplete**.
+
+## 2.3 R functions
+
+You can call a group of R commands by using a function. The basic form of a function is `function.name(arguments, options)`. Even if there are no arguments or options, the parentheses are still mandatory. If you leave off the parentheses, R will print out the source code for the function you have entered.
+
+```{r }
+date
+```
+
+```{r }
+date()
+```
+
+### Exercise 2.1
+
+Select the Help tab and type `seq` in the box with the search symbol (magnifying glass). Read the description and look at the usage. Make a note about anything you find unclear in the user manual format, we will start the lab by checking any questions you have regarding the material up to this point and the user manual in particular.
+
+Arguments and options can be passed by listing them in the order expected by the function.
+
+```{r }
+# Enter code here.
+```
+
+## 2.4 Packages
+
+At the top left-hand corner of the user manual for the seq function you can see the string `seq{base}`. This states that the seq function is part of the base package. A package is a collection of functions.
+
+If you select the Packages tab you can see the list of available packages. In order to use the functions in a package you need to load it. If you scroll down the Packages tab you should see that the base and datasets packages are already loaded. You can load additional packages by entering the `library(packageName)` command. Alternatively, you can tick the box next to `packageName` in the **Packages tab**. Note that when you tick the box next to a package, the `library(packageName)` command appears in the console.
+
+If you want to use a package that is not listed you must install it first. You can do this by entering the `install.packages("packageName")` command or selecting **Install** in the **Packages tab**.
+
+# 3. Vectors
+
+A vector is about the simplest form for R data objects. In R, even single values are considered vectors. A data vector can be create with the `c()` function.
+
+```{r }
+# a vector containing one element
+a1 <- 6
+# a vector containing four elements
+a2 <- c(6, 4, 8, 3) 
+# a vector containing the values 1 to 10
+a3 <- 1:10 
+# a vector containing 1, 4, 7, 10
+a4 <- seq(from=1, to=12, by=3) 
+# a vector containing two character values
+a5 <- c("Fred", "Ginger") 
+```
+
+Elements of a vector can be accessed using the `[]` operator. Note that indexing starts from `1`.
+
+```{r }
+a <- c(22, 38, 12, 23, 29, 18, 16, 24)
+a[2]
+```
+
+```{r }
+a[2] <- 0
+a
+```
+
+The length of a vector can be retrieved by using the function `length()`.
+
+```{r }
+length(a)
+```
+
+Accessing a vector beyond its boundary, returns `NA`, which is the way R codes missing values.
+
+```{r }
+a[100]
+```
+
+Note that vectors can only store one type of data at a time. You can inspect the type of data stored by any object in the Environment pane or by using the `class()` function.
+
+```{r }
+numbers <- c(1, 2, 3, 4)
+strings <- c("one", "two", "three", "four")
+class(numbers)
+class(strings)
+```
+
+You can concatenate vectors, by combining them using the `c()` function. If you concatenate vectors storing different types, they get converted to the most general class.
+
+```{r }
+c(numbers, numbers)
+c(strings, strings)
+mixed <- c(numbers, strings)
+class(mixed)
+```
+
+Vectors can be sorted according to their content.
+
+```{r }
+# rearrange the vector in ascending order
+sort(strings) 
+
+# return indices to rearrange the vector in ascending order
+order(strings)
+
+# same as sort(a)
+strings[order(strings)] 
+```
+
+### Exercise 3.1
+
+Report sizes of the 10th largest and of the 10th smallest island. The R package `datasets` is automatically loaded (as you can check from the Packages tab on the right), so the required dataset `islands` can be accessed directly by calling the dataset by its name.
+
+```{r}
+# Enter code here.
+```
+
+## 3.1 Simple tabulations
+
+Given a vector of data, we can summarise its contents in different ways. Let's look at the `discoveries` time series, from the built-in datasets package, which counts the number of ***great*** discoveries per year:
+
+```{r}
+discoveries
+```
+
+This dataset is quite short but looking at the entire dataset would not be a good idea for anything longer. We can get a feel for the distribution of a dataset with the `summary()` function which displays descriptive statistics:
+
+```{r }
+summary(discoveries)
+```
+
+The set of unique elements can be found with `unique()`.
+
+```{r }
+unique(discoveries)
+sort(unique(discoveries))
+```
+
+We could also tabulate the vector, that is count the number of occurrences of each element in the vector.
+
+```{r }
+table(discoveries)
+```
+
+Most continuous data is hard to tabulate directly. You can categorise observations into bins by using the `cut()` function:
+
+```{r }
+#Display just the first few lines of the built-in rivers dataset
+head(rivers)
+```
+
+```{r }
+bins <- seq(0, 4000, by = 1000)
+table(cut(rivers, bins))
+```
+
+We can get better labels, by allowing more digits:
+
+```{r}
+table(cut(rivers, bins, dig.lab = 4)) # see ?cut for more details
+```
+
+We can get a visual representation of the distribution by creating a histogram of our data using `hist()`.
+
+```{r}
+hist(rivers)
+```
+
+The breaks in the dataset are automatically computed by R and they offer a good starting point. We can always force the breaks in the histogram to get a more tailored view of our dataset. Let's also add better labels (options `xlab` and `ylab`) and title (option `main`) to the plot.
+
+```{r}
+bins <- seq(0, 4000, by = 250)
+hist(rivers, breaks = bins,
+     main = "Distribution of river lengths",      
+     xlab = "Length in miles")
+```
+
+# 4. Basic functions and operators
+
+The standard mathematical operations are available `("+", "-", "*", "/", "ˆ")` and they respect the common precedence rules. To change the order in which operations are performed, use parentheses.
+
+```{r }
+7 - 2 * 3^2
+(7 - 2 * 3)^2
+((7 - 2) * 3)^2
+```
+
+Other less commonly used mathematical operators are `%/%` for integer division and `%%` for modulus (which returns the remainder after integer division).
+
+```{r}
+7 %/% 2
+7 %% 2
+```
+
+## 4.1 Mathematical functions
+
+Here are some built-in mathematical functions in R:
+
+-   `sum()` summation
+-   `sqrt()` square root
+-   `exp()` exponential
+-   `log()` natural log
+-   `log10()` base-10 logs
+-   `abs()` absolute value
+-   `max()` maximum value
+-   `sin()` and all the other trig functions
+
+All these functions (and many others in R) are vectorised: this means that applying the function to a vector, applies it to each element in the vector.
+
+```{r}
+a <- c(1, 4, 16, 25, 36)
+sqrt(a)
+```
+
+Note that the order of operations is important!
+
+```{r}
+sum(discoveries)
+
+sum(discoveries)^2 # first elements are summed, then squared
+
+sum(discoveries^2) # first elements are squared, then summed
+```
+
+```{r}
+x <- c(2, 3, 5)
+y <- c(3, 8, 9)
+
+sum(x) * sum(y) # product of the sums
+sum(x * y) # sum of the crossproducts
+```
+
+## 4.2 Descriptive statistics
+
+Many statistical functions are defined too:
+
+```{r}
+length(rivers) # sample size
+median(rivers) # sample median
+mean(rivers) # sample mean
+range(rivers) # minimum and maximum values
+var(rivers) # sample variance
+sd(rivers) # sample standard deviation
+```
+
+Quantiles corresponding to the given probabilities can be obtained with the `quantile()` function:
+
+```{r}
+quantile(rivers, c(0.25, 0.75)) # interquartile range
+quantile(rivers) # default output
+```
+
+### Exercise 4.1
+
+Create a vector called `islands3` which includes only `islands`, from the built-in `islands` dataset, with area divisible by 3 and report its median and interquartile range.
+
+```{r}
+# Enter code here.
+```
+
+Correlations between pairs of vectors can be computed with the `cor()` function.
+
+```{r}
+x <- rnorm(100, mean = 50, sd = 10) #100 normally distributed random numbers
+y <- rnorm(100, mean = 75, sd = 20)
+plot(x, y) # scatter plot
+cor(x, y) # Pearson's r is the default
+cor(x, y, method = "spearman") # Spearman rho
+```
+
+Note that your numbers will be different as they depend on the seed of the random number generator. To make sure that you will get exactly the same sequence of random numbers, you need to set a seed explicitly using `set.seed()`. This is very important for reproducibility of results.
+
+```{r}
+rnorm(5) 
+rnorm(5)
+```
+
+```{r}
+set.seed(5467)
+rnorm(5) 
+
+set.seed(5467)
+rnorm(5)
+```
+
+### Exercise 4.2
+
+Compute mean and standard deviation of the `rivers` vector, and use them to create a new vector called `randomrivers` (of the same length as `rivers`) of normally distributed points according to those parameters (set the random seed to 1 beforehand).
+
+```{r}
+# Enter code here.
+```
+
+In reporting results, we generally do not need more than 2-3 decimal places. This can be achieved using either `signif()` or `round()`:
+
+```{r}
+signif(1234.56789, 3) # keep only 3 significant digits
+signif(0.123456, 3)
+```
+
+```{r}
+round(1234.56789, 3) # keep only 3 decimal places
+round(0.123456, 3)
+```
+
+### Exercise 4.3
+
+Using the `plot()` function create a scatter plot of `rivers` and `randomrivers` and report the Pearson's correlation coefficient between the two vectors at 3 significant digits.
+
+```{r}
+# Enter code here.
+```
+
+What can be said about the distribution of rivers? In what way could we investigate this?
+
+## 4.2 Logical operators
+
+Logical operators return values of logical type (either `TRUE` or `FALSE`).
+
+```{r}
+# equal
+c(1, 2, 3) == c(0, 4, 3)
+
+# not equal
+c(1, 2, 3) != c(0, 4, 3) 
+
+# greater or equal (also >, < and <= exist)
+c(1, 2, 3) >= c(0, 4, 3)
+
+# negation
+!c(TRUE, FALSE) 
+```
+
+Note that `TRUE` statements have value `1` and `FALSE` `0`.
+
+```{r}
+sum(c(TRUE, TRUE, FALSE))
+```
+
+### Exercise 4.4
+
+Count how many elements in `randomrivers` are negative and how many values in `randomrivers` are more than double than their corresponding element in `rivers`.
+
+```{r}
+# Enter code here.
+```
+
+### Exercise 4.5
+
+Count how many islands, from the `islands` dataset, have an odd area.
+
+```{r}
+# Enter code here.
+```
+
+A function that is often used with logical variables is `which()`, whose function is to return the indices of the `TRUE` values. This is very useful, for example, to determine which elements satisfy a given condition.
+
+```{r}
+which(c(1, 2, 3) >= c(0, 4, 3))
+```
+
+### Exercise 4.6
+
+Using the built-in `rivers` dataset, report minimum and maximum river lengths and their index in the vector.
+
+```{r}
+# Enter code here.
+```
+
+### Exercise 4.7
+
+Report names and sizes of islands, from the built-in `islands` dataset, with area in the first quartile, and compute the median area in this subset.
+
+```{r}
+# Enter code here.
+```
+
+There are two versions of the `OR` `(|, ||)` and `AND` `(&, &&)` operators. For vectors, you often want to apply the operator to each pair of elements in the vectors, and thus obtain a vector as result: in this case use the element-wise operators `|` and `&`.
+
+```{r}
+c(TRUE, TRUE, FALSE) | c(TRUE, FALSE, FALSE) 
+# logical OR
+```
+
+```{r}
+c(TRUE, TRUE, FALSE) & c(TRUE, FALSE, FALSE) 
+# logical AND
+```
+
+The double version applies the operation only to objects of length `1`, so it will produce only one element as result. This is most commonly used when checking for conditions in `if` statements.
+
+```{r}
+(10 > 0) || (10 > 100)
+```
+
+```{r}
+(10 > 0) && (10 > 100)
+```
+
+Note that if you use the double operator with a vector, only the first element will be checked, which in most cases is not what you want!
+
+```{r}
+c(TRUE, TRUE, FALSE) && c(TRUE, FALSE, FALSE) 
+# only the first element is checked!
+```
+
+```{r}
+c(TRUE, TRUE, FALSE) && c(FALSE, FALSE, FALSE)
+```
+
+In some cases (such as when testing for a condition in an `if` statement) we may want to perform an element-wise logical test, but still return just one value. That's where `all()` and `any(`) can be of help.
+
+```{r}
+# all tests must be TRUE for the result to be TRUE
+all(1:5 %in% 1:10) 
+all(1:5 %in% 5:10)
+
+# at least one test must be TRUE for the result to be TRUE
+any(1:5 %in% 5:10) 
+any(1:5 %in% 9:10)
+```
+
+## 4.3 Set operations
+
+A very common task is to join two sets: this may mean appending the elements of one to the other, or creating the union of the two, or limiting the result to the intersection.
+
+```{r}
+first6months <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun")
+months.31day <- c("Jan", "Mar", "May", "Jul", "Aug", "Oct", "Dec")
+
+# concatenation of the two sets
+c(first6months, months.31day) 
+```
+
+```{r}
+# elements present in either set
+union(first6months, months.31day) 
+```
+
+```{r}
+# elements present in both sets
+intersect(first6months, months.31day) 
+```
+
+The `setdiff()` function allows to remove elements from a set.
+
+```{r}
+# elements not in the second set
+setdiff(first6months, months.31day) 
+```
+
+### Exercise 4.8
+
+Plot a histogram of all integers between 1 and the maximum river length that do not appear in the rivers vector.
+
+```{r}
+# Enter code here.
+```
+
+A very useful operator is `%in%`, which tests if the elements in the first set are present in the second set.
+
+```{r}
+first6months %in% months.31day
+c(0, 5, 10, 15) %in% 1:10
+```
+
+### Exercise 4.9
+
+Report the smallest area in `islands3` that is also present in the rivers vector, and for the areas in `islands3` that are not present in rivers report the mean rounded to the first decimal place. What goes wrong when trying to answer the second question with the function `setdiff()`?
+
+```{r}
+# Enter code here.
+```
+
+# 5 String operations
+
+It is very common to have to deal with strings, in R these are objects of class character.
+
+```{r}
+a1 <- "First string"
+a2 <- "Another string"
+a3 <- c(a1, a2, "String")
+```
+
+To join two or more strings into one, use the function `paste()`. You can use option `sep` to specify what separator should be inserted between each pairs of strings (by default it's a space). The shortcut `paste0()`, where the default is no space, is also available.
+
+```{r}
+paste(a1, a2)
+```
+
+```{r}
+paste(a1, a2, sep = "") 
+# equivalent to paste0(a1, a2)
+```
+
+```{r}
+paste(a1, a2, sep = " - ")
+```
+
+The same function can be used to append the same text to a vector of strings.
+
+```{r}
+paste(a3, "example")
+```
+
+Sometimes we may want to check if a specific pattern is present in a string (or a vector of strings). The function `grep()` allows for that.
+
+```{r}
+# return indices of matches
+grep("string", a3) 
+
+# ignore differences in capitalization
+grep("string", a3, ignore.case = TRUE) 
+```
+
+```{r}
+# return content of matched elements
+grep("A", a3, value = TRUE) 
+```
+
+The function `gsub()` substitutes part of a string with something else.
+
+```{r}
+gsub("Another", "One other", a2)
+```
+
+```{r}
+gsub("string", "example", a2)
+```
+
+```{r}
+gsub("data", "data science", a2) # no match, the string is left unchanged
+```
+
+For more advanced matches or substitutions, you may need to learn about regular expressions, which are ways of constructing rules to capture a specific pattern in a string. Here are some basic examples:
+
+```{r}
+us.states <- rownames(USArrests)
+grep("Ca", us.states, value = TRUE)
+```
+
+```{r}
+grep("^Ca", us.states, value = TRUE) # match only at the start of a string
+```
+
+```{r}
+grep("ing", us.states, value = TRUE)
+```
+
+```{r}
+grep("ing$", us.states, value = TRUE) # match only at the end of a string
+```
+
+```{r}
+grep("Ma", us.states, value = TRUE)
+```
+
+```{r}
+grep("Ma.*nd", us.states, value = TRUE) # match any character repeated any number of times
+```
+
+Some other useful functions.
+
+```{r}
+nchar(a3) # string length
+
+toupper(a3) # convert to uppercase
+
+tolower(a3) # convert to lowercase
+# Again, note that none of these actually change a3 in memory, unless we run, e.g., a3 <- tolower(a3).
+```
+
+# 6. Dataframes
+
+The dataframe is the primary data structure in R. This is a table in which the columns are variables and the rows are observations. While this resembles a matrix, matrices are less commonly used in R, as (just like vectors) they can only contain one class of values. A dataframe instead can contain a mix of categorical and numerical variables.
+
+Lets examine the `USArrests` built-in dataframe, which lists the number of arrests in 1973 per 100,000 population in each state for murder, assault, and rape, and it also gives the percentage of the population living in urban areas within the state.
+
+```{r}
+# show the first 6 lines of the dataframe
+head(USArrests) 
+```
+
+```{r}
+tail(USArrests, n = 10) # show the last 10 lines
+```
+
+Let's find out how big this dataframe is in terms of number of rows and columns.
+
+```{r}
+dim(USArrests)
+nrow(USArrests)
+ncol(USArrests)
+```
+
+Note that this does not count the column headers and row names. To see the names of the columns (the variable name) and of the rows use `colnames()` and `rownames()`.
+
+```{r}
+colnames(USArrests)
+rownames(USArrests)
+```
+
+If the dataframe is an object in your environment, as it would be if you create a dataset or read it in, it would appear under the **Data** section of the **Environment pane**.
+
+```{r}
+df.USArrests <- USArrests
+```
+
+Click on the triangle to the left of `df.USArrests` and you should see column names, data types and the first few values of each column.
+
+Every entry in this table-like structure is indexed by two numbers, the row number and the column number. You can also refer to the values in the dataframe by row name and column name (if these exist).
+
+```{r}
+USArrests[1, 1]
+USArrests["Idaho", "UrbanPop"]
+```
+
+The easiest way to work with the variables in the dataframe is to use the `$` operator. Note that each column of a dataframe is effectively a vector.
+
+```{r}
+head(USArrests$Murder)
+```
+
+### Exercise 6.1
+
+Using the built-in attitude dataframe, report the median, range and interquartile range for the `rating` variable.
+
+```{r}
+# Enter code here.
+```
+
+## 6.1 Subsetting
+
+Dataframes can be subset using the `[]` operator the following way: `dataframe.name[required rows/observations, required columns/variables]`. We may want only a fraction of the observations but all columns: in this case, list which observations (by name or by index) are needed, and leave the column blank.
+
+```{r}
+USArrests["Pennsylvania", ] # make sure you include the comma
+```
+
+```{r}
+USArrests[10:13, ] # once again, the comma must be there
+```
+
+```{r}
+USArrests[c(3,44,50), ]
+```
+
+The thing to pay close attention to is the comma after the row index inside the brackets. The comma followed by a blank column index tells R you want to see the entire row (all columns).
+
+If you want to see all rows for some given columns, leave a blank space before the column indices.
+
+```{r}
+head(USArrests[, c(2,3)])
+```
+
+Note that when you extract a single column, what you get is just a vector by default. If you want to keep it formatted as a dataframe, you need to disable the drop option.
+
+```{r}
+head(USArrests[, "UrbanPop"])
+```
+
+```{r}
+head(USArrests[, "UrbanPop", drop = FALSE])
+```
+
+It is also possible to discard some rows and columns by negating their indices.
+
+```{r}
+USArrests[-c(5:48), -3] # skip a bunch of rows and the third column
+```
+
+Suppose you want to see only rows for which the murder rate is greater than 15. You can accomplish this either by using some of the operations on dataframes we have already seen, or by using the `subset()` function. However, the `subset()` function can have unpredictable results in some circumstances and is best avoided.
+
+```{r}
+USArrests[USArrests$Murder > 15, ]
+subset(USArrests, Murder > 15)
+```
+
+A convenient function when dealing with operations on several columns of a dataframe is `with()`, which allows to use column names directly without needing to use `$`.
+
+```{r}
+with(USArrests, max(Murder + Rape)) # same as max(USArrests$Murder + USArrests$Rape)
+```
+
+### Exercise 6.2
+
+Report the median rating for observations that have above median values for the `raises` variable.
+
+```{r}
+# Enter code here.
+```
+
+## 6.2 Creating a dataframe
+
+Dataframes can be created by aggregating existing vectors (all must be of the same length) into one single object.
+
+```{r}
+pat.id <- c("p01", "p02", "p03", "p04", "p05", "p06", "p07")
+age <- c(58, 33, 47, 42, 61, 49, 65)
+height <- c(178, 167, 169, 172, 158, 175, 164)
+myData <- data.frame(pat.id, age, height)
+myData
+```
+
+Columns can be appended to an existing dataframe with `cbind()`.
+
+```{r}
+myData <- cbind(myData,
+          sex = c("F", "F", "M", "F", "M", "M", "F"),
+          c(0.328, 0.340, 0.235, 0.293, 0.281, 0.412, 0.304))
+myData
+```
+
+Note that since we did not specify a name for the last column, R created one by default, but we can modify it to something more sensible.
+
+```{r}
+colnames(myData)[5] <- "hdl"
+```
+
+Another way of adding a column to a dataframe is by using the `$` operator.
+
+```{r}
+myData$randomvalues <- rnorm(nrow(myData))
+myData$constant <- 5 # the same value is fills the whole column
+```
+
+```{r}
+myData$randomvalues <- NULL # to remove a column
+myData$constant <- NULL
+```
+
+It is possible to append rows using `rbind()`, but we cannot simply pass a vector to append, as each column in the dataframe may be of a different class, and vectors can store only one class of objects at a time. So we have to create a temporary dataframe to store the row that we want to append. Note that the dataframes must have exactly the same column names.
+
+```{r}
+myData <- rbind(myData,
+          data.frame(pat.id="p08", age=39,
+          height=174, sex="M", hdl=0.388))
+```
+
+## 6.3 Reading in a dataframe from a file
+
+Large data files can be generated in a number of ways but to be read easily they should have one column per variable, a header for each column is useful but can be added afterwards, one row per observation, and nothing else. The same character should separate all the columns and occur nowhere else in the document. Standard characters to separate columns are comma separated (CSV) and tab separated (TSV) format. Any data file created in this way can be read using the generic `read.table()` function (see documentation in the Help tab).
+
+```{r}
+diab00 <- read.table("data/diab00.txt", header = T, sep = "\t", stringsAsFactors = F) 
+```
+
+CSV files are easily generated using spreadsheet software such as Excel and can be opened in Excel by people who are unfamiliar with R. It is therefore very useful in multidisciplinary teams. The `read.csv()` function is a version of the more generic `read.table()` function with the options preset for a standard CSV file. Similarly, a tab-separated file can be read into a dataframe with the `read.delim()` function.
+
+```{r}
+diab00 <- read.delim("data/diab00.txt") 
+```
+
+## 6.4 Factors
+
+Factors look like character strings, but they are internally represented as integers, one for each level. Unless you set the `stringsAsFactors` option to `FALSE`, factor variables are created automatically when a dataframe is read with `read.delim()` or `read.csv()` if a column contains entries that cannot be coerced to a specific type (say `numerical` or `Dat`). Note that it's not possible to add a new level to an existing factor variable: R will set it to `NA`. It is therefore preferable to always read data in with the `stringsAsFactors` option set to `FALSE` and then convert variables to factors as and when required.
+
+```{r}
+colours <- c("red", "black", "brown", "blonde")
+freqs <- c(8, 22, 30, 18)
+# repeat each colour by the given frequency
+hair.colour <- rep(colours, freqs) 
+hair.colour <- factor(hair.colour)
+```
+
+A barplot is a simple way of plotting the frequency of a categorical variable.
+
+```{r}
+barplot(table(hair.colour), col = c("black", "white")) # colours are recycled
+```
+
+```{r}
+barplot(table(hair.colour), col = c("black", "yellow", "brown", "red"))
+```
+
+### Exercise 6.3
+
+Produce a histogram and a box-plot of the `rating` variable of the attitude dataframe side by side. You will need to first specify `par(mfrow=c(1,2))` to tell R that you want your image to contain one row and two columns. Assign correct axis labels as well as plot titles.
+
+```{r}
+# Enter code here.
+```
+
+### Challenge
+
+Extending on exercise 6.3, create a function and apply it to all the columns of the attitude dataframe to create correctly labeled histograms and boxplots, side-by-side, for each variable.
+
+```{r}
+# Enter code here.
+```
+
+# 7 Data Tables
+
+The data.table is a high performance enhancement to the data.frame. As an extension of the dataframe, the data.table provides all the benefits, but with higher memory efficiency, extremely fast aggregation, updates and joins with a simplified syntax. Data tables are defined with the `data.table()` function. Existing dataframes are compatible and can be converted by passing the dataframe to the data.table function. Likewise, the data table object may be converted back to a dataframe using the `data.frame()`. You can also convert existing unnamed list, data frame of data table by reference using `setDT`. Data tables can be expressed with the notation: `DT[i, j, by]`. This is pronounced take `DT`, subset rows using `i`, then calculate `j` grouped by `by`.
+
+```{r}
+library(data.table)
+mtcars.dt <- data.table(mtcars)
+head(mtcars.dt)
+```
+
+As data tables do not support row names, it's often sensible to keep the `rownames` as a column using the `keep.rownames` option.
+
+```{r}
+mtcars.dt <- data.table(mtcars, keep.rownames = TRUE) # Defaults the rowname to "rn"
+head(mtcars.dt)
+```
+
+The `rownames` default name can be overwritten by supplying the name you prefer.
+
+```{r}
+mtcars.dt <- data.table(mtcars, keep.rownames = "models") # Names the rowname
+head(mtcars.dt)
+```
+
+## 7.1 Creating a data table
+
+Data tables are very efficient, especially when dealing with many millions of rows.
+
+```{r}
+seed <- 1971 # Select an arbitrary number to seed the random number generator (RNG)
+sample.size <- 500000
+set.seed(seed) # Note: To ensure consistent results, the RNG must be seeded before each function call 
+diabetes.dt <- data.table(
+  pat.id = 1:sample.size,
+  dm.type = sample(
+      c(1, 2), sample.size, replace=TRUE, 
+      prob = c(0.1, 0.9)), 
+  sex = sample(
+      c(1, 2), sample.size, replace=TRUE, 
+      prob = c(0.33,0.67)), 
+  hba1c.mmol = rbeta(sample.size, 25, 9)*110 )
+
+head(diabetes.dt)
+```
+
+## 7.2 Subsetting
+
+As a reminder, `DT[i, j, by]` is pronounced take `DT`, subset rows using `i`, then calculate `j` grouped by `by`. Here we use subsetting to create derivative data tables.
+
+```{r}
+mtcars.dt <-  data.table(mtcars, keep.rownames="models")
+
+mpg.gt30.dt <- mtcars.dt[mpg > 30]
+
+cyl.4and8.dt <- mtcars.dt[cyl %in% c(4,8)]
+
+cyl.excl4and8.dt <- mtcars.dt[!cyl %in% c(4,8)]
+
+merc.models.dt <- mtcars.dt[grepl("Merc",models)]
+```
+
+## 7.3 Column selection
+
+Columns may be referenced by name or position. There are many possible ways to manipulate column selection a few are detailed here:
+
+```{r}
+# List column names explicitly
+head(diabetes.dt[, dm.type,sex])
+```
+
+```{r}
+# Return all columns in the range
+head(diabetes.dt[, dm.type:hba1c.mmol])
+```
+
+```{r}
+# Excluding a column
+head(diabetes.dt[, !"dm.type"])
+```
+
+```{r}
+# Excluding multiple columns
+head(diabetes.dt[, !c("dm.type","hba1c.mmol")])
+```
+
+```{r}
+# Excluding a range 
+head(diabetes.dt[, !(dm.type:hba1c.mmol)])
+```
+
+```{r}
+my.columns = c("dm.type","sex") 
+
+# The .. (double dot) look up one level in the environment
+head(diabetes.dt[, ..my.columns])
+```
+
+```{r}
+# Excluding based on character vector
+head(diabetes.dt[, !..my.columns])
+```
+
+```{r}
+# Selects fixed column position 
+head(diabetes.dt[,2:3])
+```
+
+The summary command provides min, max, interquartile range, median and mean. Providing `by = list(dm.type, sex)` aggregates the data and applies the summary function to each group.
+
+```{r}
+diabetes.summary <- diabetes.dt[, 
+                    as.list(summary(hba1c.mmol)),  
+                    by=list(dm.type, sex)]
+
+diabetes.summary
+```
+
+To create new columns with the summary values in the original dataframe instead, you can use the command `names(summary(c(1, 1)))` to return a character array of column names.
+
+```{r}
+diabetes.dt[, names(summary(c(1, 1))) := 
+                  as.list(summary(hba1c.mmol)),  
+            by=list(dm.type, sex)] 
+
+head(diabetes.dt)
+```
+
+The list function may be used inside the data table to modify column content and column names. This is often useful when merging tables where some column names may clash.
+
+```{r}
+# Rename a column name
+diabetes.dt[, list(diabetes.type = dm.type,sex)] 
+
+head(diabetes.dt)
+```
+
+Note that you can use a `.` as an alias of the list command. It was not used earlier to avoid confusion while introducing the concept of piping.
+
+```{r}
+manuf.info.dt <- mtcars.dt[, 
+                    .(manufacturer = 
+                          gsub(" .*", "", models))]
+head(manuf.info.dt)
+```
+
+## 7.4 Aggregation
+
+Since the data table takes the form `DT[i, j, by]`, the calculation of `j` can be aggregated. In the following example, the mean `hba1c.mmol` value is calculated for the whole group. Since there are two possible `dm.type` values in the group, each `dm.type` mean is calculated and the result applied to each row accordingly.
+
+```{r}
+diabetes.dt[, hba1c.mmol.mean := mean(hba1c.mmol), by=dm.type]
+
+head(diabetes.dt) 
+```
+
+```{r}
+diabetes.dt[, hba1c.mmol.mean := NULL] # Drops the hba1c.mmol.mean column
+```
+
+## 7.5 Special symbols
+
+The data.table package also defines special read-only symbols: `.SD`, `.N`, `.I`, `.GRP` and `.BY`. See R documentation in the **Help tab** for definitions.
+
+```{r}
+diabetes.dt[.N] # Index the last row in the data table
+```
+
+```{r}
+# Number of rows in each group
+diabetes.dt[, .N, by=.(dm.type, sex)] 
+```
+
+```{r}
+# Provide a row number for each type/sex
+diabetes.dt[, .(grp.num = .GRP), by=.(dm.type, sex)] 
+```
+
+```{r}
+# Row number for first position of each group
+diabetes.dt[, .(group.pos = .I[1]), by=.(dm.type, sex)] 
+```
+
+```{r}
+# Complete rows for first position of each group
+diabetes.dt[, .SD[1], by=.(dm.type, sex)] 
+```
+
+## 7.6 Chaining with pipes
+
+Data table results can be chained together in order that the result of one data table may be passed to the next. This takes the form `DT[][][]`.
+
+Here, in the first row, we convert the mtcars built-in data frame to a data table, then we chain the output and only select two columns. We assign the result to the final data table `mtcars.cylmpg.dt`.
+
+```{r}
+mtcars.cylmpg.dt <- data.table(mtcars)[,list(cyl, mpg)]
+mtcars.cylmpg.dt
+```
+
+Adding many chains may make your code very hard to follow. For this reason you might want to use the commonly known piping operator `%>%` defined by the `magrittr` package. Alternatively, R offers a pipe operator `|>` that has the same functionality from version 4.1 onwards. (Since `|>` operator is not compatible with `data.table` package yet, we will solely use `%>%` operator.) This operator uses the output of whatever precedes it as the input for whatever comes after. You can indicate exactly where the output needs to be applied as input using a `.`, otherwise it will assume that the output is to be used as the first argument of a function. Using this we can rewrite the above code the following way.
+
+```{r}
+library(magrittr)
+
+mtcars.cylmpg.dt2 <- mtcars %>% 
+                     data.table() %>% 
+                     .[ ,list(cyl, mpg)]
+
+# Check that both data tables are the same.
+all.equal(mtcars.cylmpg.dt,mtcars.cylmpg.dt2) 
+```
+
+Suppose that we also wanted to create a column estimating the mean miles per gallon grouped by cylinder. We could do this using the assign by reference command `:=` the following way.
+
+```{r}
+mtcars.cylmpg.dt2 <- mtcars %>% 
+            data.table() %>% 
+            .[, list(cyl, mpg)] %>%
+            .[, cyl.avg.mpg := mean(mpg), by=cyl]
+```
+
+We can also chain the result to create columns showing the max and min results and finally show the results ordered by cylinder count.
+
+```{r}
+mtcars.cylmpg.dt2 <- mtcars %>% 
+          data.table() %>% 
+          .[, list(cyl, mpg)] %>%
+          .[, cyl.avg.mpg := mean(mpg), by=cyl] %>%
+          .[, c("max.cyl.avg.mpg",
+                "min.cyl.avg.mpg") :=
+              list(max(cyl.avg.mpg),
+                   min(cyl.avg.mpg))] %>%
+          .[order(cyl)]
+```
+
+### Exercise 7.1
+
+The built-in `nottem` time series object contains average air temperatures at Nottingham Castle in degrees Fahrenheit from 1920 to 1939. Documentation about time series objects can be found by searching ts in the Help tab. Note that the `time()` function extracts dates from ts objects and returns a decimal number. The `date_decimal()` and `format()` functions of the `lubridate` package can be used to convert these decimal numbers to years and months.
+
+Convert `nottem` to a data table format. Hint: Use the `c()` function to keep the most general class and convert a ts object to a numeric vector.
+
+```{r}
+library(reshape2)
+library(data.table)
+library(lubridate)
+```
+
+```{r}
+# Enter code here.
+```
+
+Use the `reshape()` function (see R documentation) to reshape your data table to a `wide` format where the months are the variables with a temperature observation for each year. Remove any additional strings so that the column names show only the months. Using the assign by reference `:=` assignment operator, add a column called `summer.avg` and add the mean temperature of the summer months June to September for each year. Finally, using the assign by reference `:=` assignment operator, add a column called `june.decade.avg` which provides the average temperature in June from 1920 to 1929 and 1930 to 1939.
+
+```{r}
+# Enter code here.
+```

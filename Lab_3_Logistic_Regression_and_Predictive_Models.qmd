@@ -1,0 +1,438 @@
+---
+title: "Lab 3 : Logistic Regression and Predictive Models"
+author: "Johnny MyungWon Lee \n (Modified from Debby Lipschutz & Stuart McGurnaghan)"
+date: 2023-02-10
+date-format: "long"
+format:
+  html:
+    toc : true
+    code-line-numbers: true
+    code-link: true
+highlight-style: atom-one
+editor: visual
+---
+
+```{r setup, include=FALSE}
+#add all your packages here
+library(data.table)
+library(dplyr) #dplyr loads magrittr too
+library(pROC)
+library(caret)
+library(kableExtra) #Allows table format with latex
+```
+
+# 1. Logistic regression
+
+Generalised Linear Models (GLM) assume that the observed outcome has been drawn from a distribution from the exponential family and that there is a linear relationships between the predictors and (a function of) the mean of that distribution. It is particularly useful with data for which we are unlikely to obtain normally distributed errors such as binary and count data. Medical data is often binary, classifying people as either having a condition (cases) or not (controls). Such binary case-control data can then be used to investigate potential risk/protective factors associated with cases/controls and make predictions. Using a GLM it is assumed that cases and controls were drawn from a binomial distribution and that the logit of the probabilities from the binomial distribution has a linear relationship with the predictors, i.e. $\ln(p/1-p) = X\beta$ with $y\sim Bin(n,p)$.
+
+Let us consider a case-control study which includes $1327$ women aged $50–81$ with hip fractures as well as $3262$ randomly selected women in the same age range. Among the cases, $40$ women take hormone replacement therapy (HRT); among the controls, $239$ women do. You are interested in finding out whether taking HRT affects the probability of having a hip fracture.
+
+Let us say the only data you have are these summary statistics. You can resolve this (under the assumption a GLM indeed describes the data) by creating a synthetic dataset which has the same characteristics and use that perform your analyses.
+
+```{r}
+y <- c(rep(1, 1327),rep(0, 3262)) # cases, controls
+hrt <- c(rep(1, 40),rep(0, 1287), # HRT, no HRT in cases
+        rep(1, 239),rep(0, 3023)) # HRT, no HRT in controls
+```
+
+To fit a logistic regression model, we can use the generalised linear model function `glm()`. For data drawn from a binomial distribution with a logit function linking to the linear predictor, use the option `family=binomial(link = "logit")`. The logit link function is the standard option for the binomial family and therefore `family="binomial"` can also be entered instead but we will use the full version for clarity.
+
+Note that if nothing is specified for the family option a Gaussian family with the identity link function is used as standard, which is equivalent to fitting a linear regression model.
+
+```{r}
+regr.hrt <-glm(y ~ hrt, family = binomial(link="logit")) 
+summary(regr.hrt)
+```
+
+Because of the presence of the link function, we have two types of fitted values. The first, correspond to the log-odds scale and are stored in the `linear.predictors` vector of the regression object.
+
+```{r}
+X <- model.matrix(regr.hrt)
+y.hat <- as.numeric(X %*% coef(regr.hrt)) # turn a 1-column matrix into a vector
+all(y.hat == regr.hrt$linear.predictors)
+```
+
+The second fitted values object correspond to the probability scale (the response scale), that is by transforming the linear predictors through the logistic function: these are stored in the `fitted.values` vector of the regression object.
+
+```{r}
+logistic <- function(z)exp(z)/(exp(z)+1)
+prob.case <- logistic(regr.hrt$linear.predictors) 
+all(prob.case == regr.hrt$fitted.values)
+```
+
+It is crucial not to mix the two scales, otherwise the interpretation will be affected.
+
+In logistic regression the Wald test statistic is distributed according to a normal distribution because the standard deviation of the outcome does not need to be estimated (this is what the message `Dispersion parameter for binomial family taken to be 1` refers to). Therefore, the test statistic is now labelled `z value` (instead of t value). The p-value is obtained by comparing the test statistic to the quantiles of a standard normal distribution.
+
+Recalling that $ln(p/1-p) = X\beta$ the estimated coefficients indicate how much the log-odds increase with each unit increase of the predictor. The sign of the regression coefficient tells us that the use of HRT has a protective effect on hip fractures (it reduces their odds). However, we need to transform it to an odds ratio in order to better appreciate the magnitude of the effect.
+
+```{r}
+# exponentiate to get the odds ratio
+exp(coef(regr.hrt)[2])
+```
+
+If HRT had no effect, the odds ratio would be $1$. An odds ratio of $0.393$ indicates that HRT reduces the odds of having a hip fracture by $60.7\%$.To build a $95\%$ confidence interval on the odds ratio, we can rely on a normal approximation remembering that $95\%$ of the probability mass of a standard normal distribution is within $-1.96$ and $1.96$, $\exp({\hat{\beta}_i}±1.96×SE(\hat{\beta}_i))$.
+
+```{r}
+beta <- regr.hrt$coefficients[2]
+se.beta <- coef(summary(regr.hrt))[2, 2]
+round(exp(beta+1.96*se.beta* c(-1, 1)), 3)
+```
+
+Equivalently, it is possible to use the `confint()` function. Results are not exactly the same, as the computation used above is based on asymptotic normality, while `confint()` uses a t-distribution, which is usually better, especially for smaller sample sizes. Again, the intervals are in the log-odds scale, but we are interested in confidence intervals for the odds ratios, so we exponentiate them.
+
+```{r}
+or.ci <- round(exp(confint(regr.hrt)), 3)
+or.ci
+```
+
+The confidence interval does not include $1$ (the odds ratio corresponding to no effect), so we can reject the null hypothesis of no effect for HRT.
+
+The estimated intercept is $-0.854$. Transforming the log-odds through the logistic function, we can compute the baseline probability, that is the probability of an event when all other covariates (in our case, just taking HRT) are zero.
+
+```{r}
+baseline.odds <- exp(coef(regr.hrt)[1])
+baseline.prob <- baseline.odds/(1+baseline.odds)
+# logistic function
+round(baseline.prob, 3)
+```
+
+This tells us that a woman in the study who does not take HRT has $29.9\%$ probability of experiencing a hip-fracture. How does this probability change if a woman takes HRT?
+
+```{r}
+hrt.odds <- exp(coef(regr.hrt)[1] + coef(regr.hrt)[2])
+hrt.prob <- hrt.odds/(1+hrt.odds)# logistic function
+round(hrt.prob, 3)
+```
+
+Note that these probabilities do not represent the absolute risk for a generic woman aged $50–81$, as the proportion of cases in a case-control study generally does not reflect the proportion in the general population.
+
+### Exercise 1.1
+
+Using the `chdagesex.csv` dataset from Learn, fit a logistic regression model to test the association between age and coronary heart disease (`model M1`). Fit an additional model (`model M2`) which also includes `sex` then compute the odds ratio for the predictors and the $95\%$ confidence interval for both models.
+
+```{r}
+# Enter code here.
+```
+
+# 2. Model evaluation
+
+The log-likelihood of a fitted model can be extracted with function `logLik()`: this also outputs the number of degrees of freedom, that is the number of parameters estimated by the model.
+
+```{r}
+logLik(regr.hrt)
+```
+
+The deviance of a model is minus twice the log-likelihood. This is what R labels `residual deviance` when using `summary()` over a logistic regression object.
+
+```{r}
+-2 * as.numeric(logLik(regr.hrt)) # same as regr.hrt$deviance
+```
+
+The null deviance, instead, is minus twice the log-likelihood of a model which only uses the intercept term and no other predictor. A null model reports the same predicted probabilities for all observations, corresponding to the proportion of cases in the dataset.
+
+```{r}
+null.model <-glm(y ~ 1, family = "binomial") # only the intercept in the model
+head(null.model$fitted.values) # same probabilities for all observations
+sum(y)/ length(y) # proportion of cases
+```
+
+```{r}
+-2 * as.numeric(logLik(null.model)) # same as regr$null.deviance
+```
+
+Models with better fit have lower deviance. In our case, adding one parameter to the null model decreases the deviance from $5519.71$ to $5484.8$. The difference between two deviances has a $\chi2$ distribution with degrees of freedom equal to the difference in parameters of the two models. Therefore we can use it as a test statistic and compute a p-value under the null hypothesis that there is no support for an additional term. If the p-value is smaller than the significance level then we reject the null hypothesis and claim that the larger model provides a significantly better fit.
+
+```{r}
+pchisq(regr.hrt$null.deviance - regr.hrt$deviance, df = 1, lower.tail = FALSE)
+```
+
+### Exercise 2.1
+
+Perform a likelihood ratio test comparing `model M1` to `model M2` from **Exercise 1.1** and confirm that the addition of `sex` to the model is significant at $0.05$ by computing a p-value.
+
+```{r}
+# Enter code here.
+```
+
+The AIC is another quantity derived from the log-likelihood which is used in model comparison, as it also takes into account model complexity, the deviance of the model is penalised by twice the number of parameters estimated in the model (stored in the rank field of the regression object).
+
+```{r}
+2 * regr.hrt$rank - 2 * as.numeric(logLik(regr.hrt))
+
+regr.hrt$aic
+```
+
+```{r}
+AIC(null.model)
+```
+
+As for the deviance, the lower the AIC, the better the model. However, there is no formal test that can be applied when comparing the AICs of two models. Nonetheless it can be a very useful initial tool to consider inclusion of variables in a model when there is a large number of variables (we will look at this and other methodologies for large datasets in the next lab).
+
+The `BIC` (see R documentation) applies a stronger penalty for the use of additional predictors: even so, in this case the proposed model is still better than the null model.
+
+```{r}
+log(length(y)) * regr.hrt$rank - 2 * as.numeric(logLik(regr.hrt))
+
+BIC(regr.hrt)
+BIC(null.model)
+```
+
+# 3. Making predictions
+
+Let us consider a dataset which relates to subarachnoid hemorrhage (SAH), which is part of the `pROC` package. `SAH` is a rare, potentially fatal, type of stroke caused by bleeding on the surface of the brain. The dataset contains a clinical assessment score `wfns` and a couple of biomarkers `s100b` and `ndka` taken at the time of hospitalisation. The patients were re-assessed $6$ months later and the outcome is recorded in the clinical score `gos6`, this has been further reduced to the binary `outcome` variable.
+
+```{r}
+data(aSAH) # copy the dataset from the package into the workspace
+summary(aSAH)
+```
+
+Let us start by fitting a simple model containing only `age` and `gender` on the entire dataset.
+
+```{r}
+asah.all <-glm(outcome ~ age + gender, data = aSAH, family = "binomial")
+summary(asah.all)
+```
+
+The `predict()` function allows us to use a fitted regression model to make a prediction. The function takes two main arguments: a fitted prediction object (the output of `lm()` or `glm()`) and a dataframe (specified by option `newdata`) containing the covariate values for which we want to make a prediction of the outcome. By default, for a logistic regression model `predict()` will return the linear predictors, that is the log-odds. If we are interested in predicted probabilities, we need to specify `type="response"`.
+
+```{r}
+y.linpred <- predict(asah.all, newdata = aSAH) # predict the data used for fitting
+y.pred <- predict(asah.all, newdata = aSAH, type = "response")
+
+head(data.frame(y.linpred, asah.all$linear.predictors, y.pred, asah.all$fitted.values))
+```
+
+Predicting the same data that was used for fitting is not very interesting this produces what is already available in the `linear.predictors` and `fitted.values` vectors of the regression object. Moreover if we tried to use this to assess the predictive performance of the model, we would be overestimating it as it may be influenced by artefacts unique to his dataset. However this function is useful for predicting the outcome for new data.
+
+This needs to be a dataframe containing columns that correspond to the predictors used in the model. For example, to predict the response for a $30$ years old male patient, we could create a dataframe to contain these data and ask the model to make a prediction for it.
+
+```{r}
+data.30M <-data.frame(age=30, gender = "Male")
+predict(asah.all, newdata=data.30M, type="response")
+```
+
+In general, predictions will be made on dataframes coming from different cohorts, or for subsets of the original dataset that were withdrawn, as in a cross-validation setting.
+
+### Exercise 3.1
+
+Create dataframe `agesex` containing two columns:
+
+-   `AGE` with values in the sequence from $1$ to $100$
+-   `SEX` created as follows
+
+```{r}
+set.seed(1)
+SEX <- factor(rbinom(100, 1, 0.5), labels = c("F", "M"))
+```
+
+Predict the probabilities of `CHD` for the `agesex` data according to `model M2` and plot them using a different colour according to sex.
+
+```{r}
+# Enter code here.
+```
+
+## 3.1 ROC curves
+
+A common method to evaluate the ability of a model to predict binary outcomes is the use of **Receiver operating characteristic (ROC)** curves. Let us imagine that the output of some linear predictor ranges between zero and ten. If we say that all predicted values greater than zero are cases then our test will be correctly classifying all the observed cases and have a specificity of $1$. However, all our controls will also have been wrongly classified as cases and our specificity is therefore zero.
+
+Similarly, if we say that all predicted greater than ten are cases we would have a sensitivity of $0$ and a specificity of $1$. ROC curves plot the sensitivity of a test against its specificity across all threshold values.
+
+### Exercise 3.2
+
+Using the `hemophilia.csv` dataset from Learn:
+
+-   Using `as.factor()` and `as.integer()`, convert the `group` variable to a $0$ and $1$ integer variable to be used as outcome variable of a classification model. Use a logistic regression to model the probability of being a carrier of hemophilia A using the two `AHF` variables as predictors, call it `regr.hem` and retrieve the predicted probabilities.
+-   Using a classification threshold $\theta=0.5$, count the number of misclassified observations, the answer should be $9$. Derive the sensitivity and specificity at this threshold.
+-   Write a function called `sens.spec(y.obs, y.pred, threshold)` that computes sensitivity and specificity from a $0$ and $1$ vector of observed outcomes, a vector of probabilities and a threshold value, and returns the two quantities as a vector.
+-   Use the new function `sens.spec()` to compute sensitivity and specificity of `regr.hem` for at least $10$ equally-spaced values of $\theta$ spread in the interval $(0,1)$ and use these to plot the ROC curve for `regr.hem`.
+
+```{r}
+# Enter code here.
+```
+
+A useful feature of the ROC curve is the fact that the **Area Under the Curve (AUC)** gives the overall probability of correctly ranking a randomly chosen case above a randomly chosen control. If our model was completely random we would have an equal chance of ranking either the randomly chosen case or the randomly chosen control above the other and the AUC would therefore be $0.5$. To compute the AUC we can use the package `pROC`. This provides function `roc()`, which by default reports the area under curve, but offers an option to plot the entire ROC curve (see `?roc` for full documentation).
+
+```{r}
+roc(hemo$group, regr.hem$fitted.values , plot=TRUE, xlim = c(0,1), silent = TRUE)
+```
+
+**NOTE** wrapping `roc()` function with `suppressMessages(invisible())` will mute `Call()` output of the function. Thus, it will be cleaner as shown below
+
+```{r echo=FALSE,results='hide',fig.keep='all'}
+suppressMessages(invisible(
+  roc(hemo$group, regr.hem$fitted.values , plot=TRUE, xlim = c(0,1))
+))
+```
+
+Let us look again at the HRT model.
+
+```{r}
+suppressMessages(invisible(
+  roc(y, regr.hrt$fitted.values, plot = TRUE, xlim = c(0,1))
+))
+```
+
+An AUC of $0.52$ is not good, this model is not very different from a random model at discriminating cases from controls. This model could help us understand if HRT has an effect on the odds of hip fractures but not to explain hip fractures based on HRT (or indeed to predict them!).
+
+### Exercise 3.3
+
+Plot the ROC curves for `model M1` and `model M2` in the same graph (hint: use option `add=TRUE` for the second curve) and report their AUCs.
+
+```{r}
+# Enter code here.
+```
+
+## 3.2 Data partitioning and cross-validation
+
+Some convenient functions related to predictive models are implemented in the `caret` package.
+
+This allows us to call function `createDataPartition()` which creates a single training/test split. This function (like similar ones in the same package) requires us to pass the vector of outcomes, so that the partition will contain a balanced proportion of cases and controls in the training and test sets. Before creating the partition, we must set the seed of the random number generation, so that results will be reproducible.
+
+```{r}
+set.seed(1)
+train.idx <- createDataPartition(aSAH$outcome, p = 0.7)$Resample1 # 70-30 split
+```
+
+This creates a list of indices corresponding to the observations in the training set. We can use this to fit the model only on this subset of data. The subset option of `lm()` and `glm()` allows control of the observations that are used to fit the model coefficients without making us create new dataframes to store the subsets.
+
+```{r}
+asah.train <- glm(outcome ~ age + gender, data = aSAH, subset = train.idx,
+                  family = "binomial")
+
+summary(asah.train)
+```
+
+Having fitted the same model on just a part of the data, we can see that the coefficients are different from those we obtained when we used all the data. Also p-values are less extreme, but this is mainly due to the reduced size of the dataset and the consequent increase in the standard errors. Note that we cannot use the deviance or the AIC to compare models fitted on different datasets (or, as in this case, on datasets of different sizes).
+
+These quantities depend on the number of observations used in fitting, so a model fitted to a larger dataset will in general have higher deviance and AIC, but this is not necessarily an indication of bad quality of fit. What really matters is how well we predict the outcome for the withdrawn observations.
+
+```{r}
+pred.prob <- predict(asah.train, newdata = aSAH[-train.idx, ],
+                     type = "response")
+```
+
+Let's plot the ROC curve for the prediction of the test data and compute the corresponding test AUC.
+
+```{r}
+suppressMessages(invisible(
+  roc(outcome ~ pred.prob, data = aSAH[-train.idx, ], 
+    plot = TRUE, xlim = c(0,1))
+))
+```
+
+The AUC for this model $0.8194$ is quite good. Unfortunately, given that we created only one partition, it is hard to tell if a similar performance would be obtained on a different random training/test split. K-folds cross-validation essentially repeats this process for k different subsets and allows us to make a prediction for all observations of the dataset. The folds can be generated with the function `createFolds()`. By default the function returns a list of indices corresponding to the test set of each fold.
+
+```{r}
+set.seed(1)
+num.folds <- 10
+folds <- createFolds(aSAH$outcome, k = num.folds) # get indices of the test sets
+```
+
+Note that the folds object is a list, this datatype allows to store different classes of objects (say vectors and dataframes) within the same variable. To access an element of a list, use the `[[]]` operator.
+
+```{r}
+folds[[1]]
+```
+
+Now it is a matter of fitting a model in each of the training sets and predict the outcome for observations in the corresponding test sets. We need to store each fitted model so that they can be used afterwards for prediction or inspection: by assigning the output from `glm()` to `res.folds[[fold]]` we are effectively adding an element to a list of results.
+
+```{r}
+regr.cv <- NULL
+for(f in 1:num.folds) {
+  train.idx <- setdiff(1:nrow(aSAH), folds[[f]])
+  regr.cv[[f]] <- glm(outcome ~ age + gender, data = aSAH, 
+                      subset = train.idx, family = "binomial")
+  }
+```
+
+### Exercise 3.4
+
+Write function `glm.cv(formula, data, folds)` that given:
+
+-   a model formula (an expression of the type `outcome ~ predictors`),
+-   a dataframe containing outcome and predictors,
+-   and a set of cross-validation folds produced by `createFolds()`, fits a logistic regression model in each of the folds and returns a list of fitted models.
+
+After setting the `set.seed(1)`, generate a set of $10$ cross-validation folds and use `glm.cv()` to cross-validate `model M1` and `model M2`.
+
+```{r}
+# Enter code here.
+```
+
+We will need another loop to produce the predicted responses for each fold. For convenience we create a dataframe to store the observed outcome and what we predict from the model.
+
+```{r}
+pred.cv <- NULL
+auc.cv <- numeric(num.folds)
+suppressMessages(invisible({
+  for(f in 1:num.folds) {
+    test.idx <- folds[[f]] 
+    pred.cv[[f]] <- data.frame(obs = aSAH$outcome[test.idx],
+                               pred = predict(regr.cv[[f]], newdata = aSAH,
+                                              type = "response")[test.idx])
+    auc.cv[f] <- roc(obs ~ pred, data = pred.cv[[f]])$auc
+  }  
+}))
+```
+
+After cross-validation, we can report the expected performance of the model on withdrawn data. This is slightly smaller than what we obtained when using a single partition, but we can attach more confidence to this estimate.
+
+```{r}
+round(mean(auc.cv), 3)
+```
+
+### Exercise 3.5
+
+Write function `predict.cv(regr.cv, data, outcome, folds)` where:
+
+-   `regr.cv` is a list of fitted models produced by `glm.cv()`,
+-   data is a dataframe of covariates,
+-   outcome is the vector of observed outcomes,
+-   and folds is the set of cross-validation folds. The function should use the model fitted on the training set of each fold to predict the outcome of the corresponding test set. The function should return a list of dataframes, each containing observed and predicted outcome for the test observations. Use `predict.cv()` to make predictions for both `model M1` and `model M2`. Using these predictions, compute AUCs for all folds and report the mean cross-validated AUCs.
+
+```{r}
+# Enter code here.
+```
+
+### Exercise 3.6
+
+Consider the following summary statistics from a study of smoking in students:
+
+```{r}
+df <- data.frame(student_smokes = c(816, 188),
+           student_nosmokes = c(3203, 1168))
+rownames(df) <- c("at least one parent smokes", "neither parent smokes")
+kable(df, caption = "Study of Smoking in students") |> 
+  kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+-   Compute the odds ratio of smoking in students according to the exposure to smoking in parents directly from the values in the table.
+
+```{r}
+# Enter code here.
+```
+
+-   Create a synthetic dataset with the same characteristics as those in the table and fit a logistic regression model to it. Check that the odds ratio for exposure to smoking in parents matches what you computed before and report the $95\%$ confidence interval, and the Wald test p-value.
+
+```{r}
+# Enter code here.
+```
+
+-   By using the deviance, test the goodness-of-fit of the model by deriving a p-value.
+
+```{r}
+# Enter code here.
+```
+
+-   From the regression coefficients compute the probability of smoking for a student whose parents do not smoke and for a student whose parents smoke.
+
+```{r}
+# Enter code here.
+```
+
+-   Compute the sensitivity and specificity of the model for threshold values of $0.12$, $0.14$, $0.2$ and $0.22$.
+
+```{r}
+# Enter code here.
+```

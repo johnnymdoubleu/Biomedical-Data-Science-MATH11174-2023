@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.2.335">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<meta name="author" content="Johnny MyungWon Lee (Modified from Debby Lipschutz &amp; Stuart McGurnaghan)">
+<meta name="dcterms.date" content="2023-02-10">
+<title>Lab 4 : High Dimensional Dataset</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<script src="Lab_4_High_Dimensional_Dataset_files/libs/clipboard/clipboard.min.js"></script>
+<script src="Lab_4_High_Dimensional_Dataset_files/libs/quarto-html/quarto.js"></script>
+<script src="Lab_4_High_Dimensional_Dataset_files/libs/quarto-html/popper.min.js"></script>
+<script src="Lab_4_High_Dimensional_Dataset_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="Lab_4_High_Dimensional_Dataset_files/libs/quarto-html/anchor.min.js"></script>
+<link href="Lab_4_High_Dimensional_Dataset_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="Lab_4_High_Dimensional_Dataset_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="Lab_4_High_Dimensional_Dataset_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="Lab_4_High_Dimensional_Dataset_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="Lab_4_High_Dimensional_Dataset_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light"><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+</head>
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active"><h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+<li>
+<a href="#correlation-plots" id="toc-correlation-plots" class="nav-link active" data-scroll-target="#correlation-plots">1. Correlation Plots</a>
+  <ul class="collapse">
+<li><a href="#exercise-2.1" id="toc-exercise-2.1" class="nav-link" data-scroll-target="#exercise-2.1">Exercise 2.1</a></li>
+  </ul>
+</li>
+  <li>
+<a href="#principal-component-analysis" id="toc-principal-component-analysis" class="nav-link" data-scroll-target="#principal-component-analysis">Principal Component Analysis</a>
+  <ul class="collapse">
+<li><a href="#exercise-3.1" id="toc-exercise-3.1" class="nav-link" data-scroll-target="#exercise-3.1">Exercise 3.1</a></li>
+  <li><a href="#exercise-3.2" id="toc-exercise-3.2" class="nav-link" data-scroll-target="#exercise-3.2">Exercise 3.2</a></li>
+  <li><a href="#exercise-3.3" id="toc-exercise-3.3" class="nav-link" data-scroll-target="#exercise-3.3">Exercise 3.3</a></li>
+  <li><a href="#exercise-3.4" id="toc-exercise-3.4" class="nav-link" data-scroll-target="#exercise-3.4">Exercise 3.4</a></li>
+  </ul>
+</li>
+  <li>
+<a href="#regularisation-approaches" id="toc-regularisation-approaches" class="nav-link" data-scroll-target="#regularisation-approaches">4. Regularisation approaches</a>
+  <ul class="collapse">
+<li><a href="#exercise-4.1" id="toc-exercise-4.1" class="nav-link" data-scroll-target="#exercise-4.1">Exercise 4.1</a></li>
+  </ul>
+</li>
+  </ul></nav>
+</div>
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block default"><div class="quarto-title">
+<h1 class="title">Lab 4 : High Dimensional Dataset</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Johnny MyungWon Lee (Modified from Debby Lipschutz &amp; Stuart McGurnaghan) </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">February 10, 2023</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header><section id="correlation-plots" class="level1"><h1>1. Correlation Plots</h1>
+<p>When we have a large number of numeric potential predictors, it can be useful to examine the correlation matrix to identify any potential colinearity between variables which might violate your modeling assumptions and reduce the number of predictors to consider in your model. Let’s consider the dataset provided with this worksheet called <code>cancer_reg.csv</code>. This dataset contains cancer death rates in US counties and and 33 other variables.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a>cancer.dt <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="st">"data/cancer_reg.csv"</span>)</span>
+<span id="cb1-2"><a href="#cb1-2"></a></span>
+<span id="cb1-3"><a href="#cb1-3"></a>numcols <span class="ot">&lt;-</span> <span class="fu">sapply</span>(cancer.dt, is.numeric) </span>
+<span id="cb1-4"><a href="#cb1-4"></a>cor.cancer <span class="ot">&lt;-</span> cancer.dt[, ..numcols] <span class="sc">%&gt;%</span> <span class="co">#subset of numeric columns</span></span>
+<span id="cb1-5"><a href="#cb1-5"></a>            <span class="fu">cor</span>(<span class="at">use=</span><span class="st">"pairwise.complete"</span>)</span>
+<span id="cb1-6"><a href="#cb1-6"></a><span class="fu">dim</span>(cor.cancer)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 32 32</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="fu">corrplot</span>(cor.cancer)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Lab_4_High_Dimensional_Dataset_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Due to the (modestly) large number of variables this is still difficult to examine. The default plot can be improved by using some of the available options. <a href="https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html">see here</a></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>        <span class="co"># order the variablesby correlation clusters</span></span>
+<span id="cb4-2"><a href="#cb4-2"></a><span class="fu">corrplot</span>(cor.cancer, <span class="at">order=</span><span class="st">"hclust"</span>, </span>
+<span id="cb4-3"><a href="#cb4-3"></a>         <span class="co"># remove the diagonal elements </span></span>
+<span id="cb4-4"><a href="#cb4-4"></a>         <span class="at">diag=</span><span class="cn">FALSE</span>,                                   </span>
+<span id="cb4-5"><a href="#cb4-5"></a>         <span class="co"># change the colour and size of the labels</span></span>
+<span id="cb4-6"><a href="#cb4-6"></a>         <span class="at">tl.col=</span><span class="st">"black"</span>, <span class="at">tl.cex =</span> <span class="fl">0.5</span>,                 </span>
+<span id="cb4-7"><a href="#cb4-7"></a>         <span class="at">title=</span><span class="st">"Correlation matrix (ordered by hierarchical clustering)"</span>, </span>
+<span id="cb4-8"><a href="#cb4-8"></a>         <span class="co"># display the upper triangle only </span></span>
+<span id="cb4-9"><a href="#cb4-9"></a>         <span class="at">type =</span> <span class="st">'upper'</span>,</span>
+<span id="cb4-10"><a href="#cb4-10"></a>         <span class="co"># change the size of the margins (bottom, left, top, right) </span></span>
+<span id="cb4-11"><a href="#cb4-11"></a>         <span class="at">mar=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>))                                 </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Lab_4_High_Dimensional_Dataset_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Looking at the above plot we can see that there are strong associations between variables which seem to indicate wealth/poverty. Taking this into account and the correlations with death rate in the top row it would be reasonable to look at fitting a model using only incidence rate and a measure of wealth/poverty such as median income. Depending on our research area we might want to check whether there is any support for including ethnic composition, education or health coverage once incidence rate and wealth/poverty has been taken into account. It is also important to note that correlations only indicate the strength of linear association. So a lack of association may be due to a lack of relationship or the nature of that relationship. Some transformation of the variables with little or no association may be needed. Again you can reduce the number of variables you look at heuristically. Here, variables such as birth rate and population size clearly shouldn’t be included however it would be sensible to investogate the age variables. Moreover, the fact that the overall median age doesnn’t appear to be associated with the median age for males or females strongly indicates that this data needs to be looked at.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="fu">with</span>(cancer.dt, <span class="fu">plot</span>(MedianAge, MedianAgeMale))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Lab_4_High_Dimensional_Dataset_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="fu">skewness</span>(cancer.dt<span class="sc">$</span>MedianAge, <span class="at">na.rm=</span>T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 9.985026</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>cancer.dt[MedianAge <span class="sc">&gt;</span> <span class="dv">120</span>, <span class="st">'MedianAge'</span><span class="sc">:</span><span class="er">=</span>MedianAge<span class="sc">/</span><span class="dv">12</span>] <span class="co"># change from monthly to yearly scale</span></span>
+<span id="cb8-2"><a href="#cb8-2"></a></span>
+<span id="cb8-3"><a href="#cb8-3"></a><span class="fu">with</span>(cancer.dt, <span class="fu">hist</span>(MedianAge))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Lab_4_High_Dimensional_Dataset_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="co"># Create variable with median age grouped by 10% quantiles</span></span>
+<span id="cb9-2"><a href="#cb9-2"></a>cancer.dt<span class="sc">$</span>binnedAge <span class="ot">&lt;-</span> cancer.dt<span class="sc">$</span>MedianAge <span class="sc">%&gt;%</span></span>
+<span id="cb9-3"><a href="#cb9-3"></a>                        <span class="fu">quantile</span>(<span class="at">probs =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">0.1</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb9-4"><a href="#cb9-4"></a>                        <span class="fu">cut</span>(cancer.dt<span class="sc">$</span>MedianAge,.)            </span>
+<span id="cb9-5"><a href="#cb9-5"></a></span>
+<span id="cb9-6"><a href="#cb9-6"></a><span class="fu">with</span>(cancer.dt, <span class="fu">boxplot</span>(TARGET_deathRate <span class="sc">~</span> binnedAge))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Lab_4_High_Dimensional_Dataset_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>#2 Subset Selection</p>
+<p>Stepwise selection can be executed through function <code>stepAIC()</code> provided by the <code>MASS</code> package. The function requires an initial model, and adds or removes one predictor at a time (according to what is specified in the direction parameter) until no improvement in AIC can be produced.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a>full.model <span class="ot">&lt;-</span> <span class="fu">lm</span>(TARGET_deathRate <span class="sc">~</span> incidenceRate <span class="sc">+</span> medIncome <span class="sc">+</span> </span>
+<span id="cb10-2"><a href="#cb10-2"></a>                         PctPrivateCoverage <span class="sc">+</span> PctPublicCoverage <span class="sc">+</span></span>
+<span id="cb10-3"><a href="#cb10-3"></a>                         PctWhite <span class="sc">+</span> PctBlack <span class="sc">+</span> PctAsian, <span class="at">data=</span>cancer.dt) </span>
+<span id="cb10-4"><a href="#cb10-4"></a></span>
+<span id="cb10-5"><a href="#cb10-5"></a>sel.back <span class="ot">&lt;-</span> <span class="fu">stepAIC</span>(full.model, <span class="at">direction=</span><span class="st">"back"</span>) <span class="co"># backward elimination</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Start:  AIC=18588.35
+TARGET_deathRate ~ incidenceRate + medIncome + PctPrivateCoverage + 
+    PctPublicCoverage + PctWhite + PctBlack + PctAsian
+
+                     Df Sum of Sq     RSS   AIC
+&lt;none&gt;                            1352146 18588
+- PctWhite            1      1054 1353200 18589
+- PctPublicCoverage   1      1304 1353449 18589
+- PctAsian            1      1746 1353892 18590
+- PctBlack            1      5693 1357839 18599
+- medIncome           1     22634 1374780 18637
+- PctPrivateCoverage  1     41505 1393651 18679
+- incidenceRate       1    465926 1818071 19489</code></pre>
+</div>
+</div>
+<p>At each iteration of the selection process all attempted models are fitted on the data and their AICs are compared. The chosen model is the one that produces the lowest AIC. Among the models compared there is also the current one (indicated by ). When this produces the lowest AIC, the process stops. In this case, backward elimination stopped after the first iteration. After that, the removal of any other variables would cause an increase in AIC, so backward elimination stops. Note however that the increase in AIC caused by removing percent white, percent asian or percent public health coverage is negligible.</p>
+<p>The object produced by <code>stepAIC()</code> is identical to one produced by <code><a href="https://rdrr.io/r/stats/lm.html">lm()</a></code> or <code><a href="https://rdrr.io/r/stats/glm.html">glm()</a></code>, and it corresponds to the final model. So, for example, to see the results of fitting the model we can use <code><a href="https://rdrr.io/r/base/summary.html">summary()</a></code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a><span class="fu">summary</span>(sel.back)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = TARGET_deathRate ~ incidenceRate + medIncome + PctPrivateCoverage + 
+    PctPublicCoverage + PctWhite + PctBlack + PctAsian, data = cancer.dt)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-134.042  -12.370   -0.251   12.313  124.637 
+
+Coefficients:
+                     Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)         1.219e+02  7.029e+00  17.341  &lt; 2e-16 ***
+incidenceRate       2.356e-01  7.282e-03  32.360  &lt; 2e-16 ***
+medIncome          -4.110e-04  5.762e-05  -7.132 1.23e-12 ***
+PctPrivateCoverage -6.679e-01  6.915e-02  -9.658  &lt; 2e-16 ***
+PctPublicCoverage   1.429e-01  8.349e-02   1.712 0.087041 .  
+PctWhite            8.349e-02  5.424e-02   1.539 0.123822    
+PctBlack            1.934e-01  5.407e-02   3.577 0.000353 ***
+PctAsian           -3.653e-01  1.844e-01  -1.981 0.047672 *  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 21.09 on 3039 degrees of freedom
+Multiple R-squared:  0.4236,    Adjusted R-squared:  0.4223 
+F-statistic: 319.1 on 7 and 3039 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+</div>
+<p>We could now try forward selection on the same dataset. When going forward, the scope parameter must always be specified to indicate the upper model, that is which variables should be considered in the selection process (when going backward this is implied by the initial model, which by definition includes all variables of potential interest).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1"></a>null.model <span class="ot">&lt;-</span> <span class="fu">lm</span>(TARGET_deathRate <span class="sc">~</span> <span class="dv">1</span>, <span class="at">data=</span>cancer.dt) <span class="co"># only include the intercept</span></span>
+<span id="cb14-2"><a href="#cb14-2"></a>sel.forw <span class="ot">&lt;-</span> <span class="fu">stepAIC</span>(null.model, <span class="at">scope=</span><span class="fu">list</span>(<span class="at">upper=</span>full.model), <span class="at">direction=</span><span class="st">"forward"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Start:  AIC=20253.13
+TARGET_deathRate ~ 1
+
+                     Df Sum of Sq     RSS   AIC
++ incidenceRate       1    473839 1872027 19568
++ medIncome           1    430961 1914905 19637
++ PctPublicCoverage   1    383967 1961899 19711
++ PctPrivateCoverage  1    349643 1996223 19763
++ PctBlack            1    154971 2190895 20047
++ PctAsian            1     81447 2264419 20148
++ PctWhite            1     73826 2272040 20158
+&lt;none&gt;                            2345866 20253
+
+Step:  AIC=19567.63
+TARGET_deathRate ~ incidenceRate
+
+                     Df Sum of Sq     RSS   AIC
++ PctPrivateCoverage  1    445430 1426597 18742
++ medIncome           1    430025 1442002 18774
++ PctPublicCoverage   1    346376 1525651 18946
++ PctBlack            1    100866 1771161 19401
++ PctAsian            1     78292 1793736 19440
++ PctWhite            1     68513 1803514 19456
+&lt;none&gt;                            1872027 19568
+
+Step:  AIC=18741.67
+TARGET_deathRate ~ incidenceRate + PctPrivateCoverage
+
+                    Df Sum of Sq     RSS   AIC
++ medIncome          1     61314 1365282 18610
++ PctAsian           1     24033 1402564 18692
++ PctPublicCoverage  1     22053 1404543 18696
++ PctBlack           1      6709 1419888 18729
+&lt;none&gt;                           1426597 18742
++ PctWhite           1       913 1425684 18742
+
+Step:  AIC=18609.81
+TARGET_deathRate ~ incidenceRate + PctPrivateCoverage + medIncome
+
+                    Df Sum of Sq     RSS   AIC
++ PctBlack           1    6173.2 1359109 18598
++ PctAsian           1    2996.9 1362285 18605
++ PctPublicCoverage  1    1171.3 1364111 18609
++ PctWhite           1     902.7 1364380 18610
+&lt;none&gt;                           1365282 18610
+
+Step:  AIC=18598
+TARGET_deathRate ~ incidenceRate + PctPrivateCoverage + medIncome + 
+    PctBlack
+
+                    Df Sum of Sq     RSS   AIC
++ PctAsian           1    4079.6 1355030 18591
++ PctWhite           1    4040.3 1355069 18591
++ PctPublicCoverage  1    2053.6 1357055 18595
+&lt;none&gt;                           1359109 18598
+
+Step:  AIC=18590.84
+TARGET_deathRate ~ incidenceRate + PctPrivateCoverage + medIncome + 
+    PctBlack + PctAsian
+
+                    Df Sum of Sq     RSS   AIC
++ PctPublicCoverage  1    1829.5 1353200 18589
++ PctWhite           1    1580.1 1353449 18589
+&lt;none&gt;                           1355030 18591
+
+Step:  AIC=18588.73
+TARGET_deathRate ~ incidenceRate + PctPrivateCoverage + medIncome + 
+    PctBlack + PctAsian + PctPublicCoverage
+
+           Df Sum of Sq     RSS   AIC
++ PctWhite  1    1054.3 1352146 18588
+&lt;none&gt;                  1353200 18589
+
+Step:  AIC=18588.35
+TARGET_deathRate ~ incidenceRate + PctPrivateCoverage + medIncome + 
+    PctBlack + PctAsian + PctPublicCoverage + PctWhite</code></pre>
+</div>
+</div>
+<section id="exercise-2.1" class="level3"><h3 class="anchored" data-anchor-id="exercise-2.1">Exercise 2.1</h3>
+<p>Perform both forward and backward selection using all the variables from the <code>diab01.txt</code> dataset from Learn, except for the patient identifier, and discuss the results. Make sure that both forward and backward methods are forced to include both age and sex (hint: use scope for the backwards method).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1"></a>diab01.dt <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="st">'data/diab01.txt'</span>)</span>
+<span id="cb16-2"><a href="#cb16-2"></a>diab01.dt.complete <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(diab01.dt)</span>
+<span id="cb16-3"><a href="#cb16-3"></a></span>
+<span id="cb16-4"><a href="#cb16-4"></a><span class="co"># '.' is shorthand for use every column except the outcome.</span></span>
+<span id="cb16-5"><a href="#cb16-5"></a>full.model <span class="ot">&lt;-</span> <span class="fu">lm</span>(Y <span class="sc">~</span> ., <span class="at">data=</span>diab01.dt.complete[,<span class="sc">!</span><span class="st">'PAT'</span>])       </span>
+<span id="cb16-6"><a href="#cb16-6"></a>null.model <span class="ot">&lt;-</span> <span class="fu">lm</span>(Y <span class="sc">~</span> AGE <span class="sc">+</span> SEX, <span class="at">data=</span>diab01.dt.complete[,<span class="sc">!</span><span class="st">'PAT'</span>])</span>
+<span id="cb16-7"><a href="#cb16-7"></a></span>
+<span id="cb16-8"><a href="#cb16-8"></a><span class="co"># From full to null</span></span>
+<span id="cb16-9"><a href="#cb16-9"></a>back.diab <span class="ot">&lt;-</span> <span class="fu">stepAIC</span>(full.model, <span class="at">scope=</span><span class="fu">list</span>(<span class="at">lower=</span>null.model), <span class="at">direction=</span><span class="st">"back"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Start:  AIC=648.62
+Y ~ AGE + SEX + BMI + BP + TC + LDL + HDL + GLU
+
+       Df Sum of Sq    RSS    AIC
+- GLU   1       3.2 231424 646.62
+&lt;none&gt;              231421 648.62
+- TC    1    9538.9 240960 649.81
+- BMI   1    9667.4 241088 649.85
+- LDL   1   12158.4 243580 650.67
+- BP    1   13124.1 244545 650.98
+- HDL   1   28234.3 259655 655.72
+
+Step:  AIC=646.62
+Y ~ AGE + SEX + BMI + BP + TC + LDL + HDL
+
+       Df Sum of Sq    RSS    AIC
+&lt;none&gt;              231424 646.62
+- BMI   1     10184 241608 648.02
+- TC    1     10788 242212 648.22
+- LDL   1     13678 245102 649.16
+- BP    1     13909 245333 649.23
+- HDL   1     29511 260935 654.10</code></pre>
+</div>
+</div>
+</section></section><section id="principal-component-analysis" class="level1"><h1>Principal Component Analysis</h1>
+<p>If we are more interested in getting strong predictions and are less worried about being able to interpret the results we can use a numerical approach to reduce dimensionality such as principal component analysis (PCA). PCA reduces dimensionality by taking the eigenvectors (principle components) of the variance-covariance matrix of the variables and ordering by the size of their eigenvalues (i.e.&nbsp;by how much variance in the data they explain). So by definition each principle component is a linear combination of the variables and they are uncorrelated to each other.</p>
+<p>PCA can be run by using the function <code><a href="https://rdrr.io/r/stats/prcomp.html">prcomp()</a></code>. It is of course only possible to do this with numerical variables, and missing values need to be removed or imputed. Also make sure that the outcome variable is not included in the PCA analysis. Setting options center and scale to TRUE standardizes your data and is always advised</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1"></a><span class="fu">apply</span>(cancer.dt, <span class="dv">2</span>, is.na) <span class="sc">%&gt;%</span> <span class="fu">colSums</span>() <span class="sc">%&gt;%</span> sort</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            avgAnnCount        avgDeathsPerYear        TARGET_deathRate 
+                      0                       0                       0 
+          incidenceRate               medIncome              popEst2015 
+                      0                       0                       0 
+         povertyPercent             studyPerCap               binnedInc 
+                      0                       0                       0 
+              MedianAge           MedianAgeMale         MedianAgeFemale 
+                      0                       0                       0 
+              Geography        AvgHouseholdSize          PercentMarried 
+                      0                       0                       0 
+           PctNoHS18_24              PctHS18_24         PctBachDeg18_24 
+                      0                       0                       0 
+           PctHS25_Over       PctBachDeg25_Over    PctUnemployed16_Over 
+                      0                       0                       0 
+     PctPrivateCoverage      PctEmpPrivCoverage       PctPublicCoverage 
+                      0                       0                       0 
+ PctPublicCoverageAlone                PctWhite                PctBlack 
+                      0                       0                       0 
+               PctAsian            PctOtherRace    PctMarriedHouseholds 
+                      0                       0                       0 
+              BirthRate               binnedAge      PctEmployed16_Over 
+                      0                       1                     152 
+PctPrivateCoverageAlone         PctSomeCol18_24 
+                    609                    2285 </code></pre>
+</div>
+</div>
+<section id="exercise-3.1" class="level3"><h3 class="anchored" data-anchor-id="exercise-3.1">Exercise 3.1</h3>
+<p>For this example we are just going to get rid of the columns with missing values discuss with your peers what your other options are.</p>
+<ul>
+<li><p><code>PctSomeCol18_24</code> - <span class="math inline">\(75\%\)</span> of the data is missing in this column. However, further scrutiny will show that <code>PctSomeCol18_24</code> is equal to <span class="math inline">\(100\)</span> - the row sum of all the other educational attainment categories for <span class="math inline">\(18-24\)</span> year olds.</p></li>
+<li><p><code>PctPrivateCoverageAlone</code> - <span class="math inline">\(20\%\)</span> of the data is missing and cannot be obtained directly from other variables. It could, however, be predicted from the other variables with some degree of accuracy. The value of this is debatable.</p></li>
+<li><p><code>PctEmployed16_Over</code> - Only <span class="math inline">\(5\%\)</span> of the data is missing, you could do is simple imputation using a constant such as the mean/mode etc (or even use the mean/mode by groups) if you want to avoid colinearity but if colinearity is being dealt with because you are using PCA or a similar method then again you can predict it to some extent using the other data.</p></li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1"></a><span class="co"># Remove unwanted columns</span></span>
+<span id="cb20-2"><a href="#cb20-2"></a>numcols[<span class="fu">c</span>(<span class="st">'TARGET_deathRate'</span>, <span class="st">'PctEmployed16_Over'</span>, <span class="st">'PctPrivateCoverageAlone'</span>, <span class="st">'PctSomeCol18_24'</span>, <span class="st">'avgAnnCount'</span>, <span class="st">'avgDeathsPerYear'</span>, <span class="st">'popEst2015'</span>, <span class="st">'BirthRate'</span>)] <span class="ot">&lt;-</span> F</span>
+<span id="cb20-3"><a href="#cb20-3"></a></span>
+<span id="cb20-4"><a href="#cb20-4"></a>pca.vars <span class="ot">&lt;-</span> <span class="fu">prcomp</span>(cancer.dt[, ..numcols], <span class="at">center =</span> T, <span class="at">scale =</span> T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The amount of variability explained by the components can be computed bearing in mind that the square root of the eigenvalues is stored in vector sdev of the PCA object. The variance explained by the principal components can be visualized through a scree plot.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1"></a><span class="fu">summary</span>(pca.vars)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Importance of components:
+                          PC1    PC2     PC3     PC4     PC5     PC6     PC7
+Standard deviation     2.7341 2.2187 1.43594 1.25012 1.03602 1.01257 0.95224
+Proportion of Variance 0.3115 0.2051 0.08591 0.06512 0.04472 0.04272 0.03778
+Cumulative Proportion  0.3115 0.5166 0.60248 0.66760 0.71232 0.75504 0.79282
+                          PC8     PC9    PC10    PC11    PC12    PC13    PC14
+Standard deviation     0.8695 0.86521 0.78093 0.77053 0.67137 0.66224 0.63704
+Proportion of Variance 0.0315 0.03119 0.02541 0.02474 0.01878 0.01827 0.01691
+Cumulative Proportion  0.8243 0.85552 0.88093 0.90567 0.92445 0.94272 0.95963
+                         PC15    PC16    PC17    PC18    PC19    PC20    PC21
+Standard deviation     0.4851 0.41778 0.36476 0.33283 0.30834 0.28899 0.24953
+Proportion of Variance 0.0098 0.00727 0.00554 0.00462 0.00396 0.00348 0.00259
+Cumulative Proportion  0.9694 0.97670 0.98225 0.98686 0.99083 0.99431 0.99690
+                          PC22    PC23    PC24
+Standard deviation     0.23009 0.13748 0.05068
+Proportion of Variance 0.00221 0.00079 0.00011
+Cumulative Proportion  0.99911 0.99989 1.00000</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1"></a>perc.expl <span class="ot">&lt;-</span> pca.vars<span class="sc">$</span>sdev<span class="sc">^</span><span class="dv">2</span> <span class="sc">/</span> <span class="fu">sum</span>(pca.vars<span class="sc">$</span>sdev<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb23-2"><a href="#cb23-2"></a><span class="fu">sum</span>(perc.expl[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.51657</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1"></a><span class="fu">screeplot</span>(pca.vars, <span class="at">main=</span><span class="st">"Scree plot"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Lab_4_High_Dimensional_Dataset_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section><section id="exercise-3.2" class="level3"><h3 class="anchored" data-anchor-id="exercise-3.2">Exercise 3.2</h3>
+<p>Discuss how you would decide which components to keep.</p>
+<p>Looking at the screeplot we can see that after the <span class="math inline">\(5^{th}\)</span> or <span class="math inline">\(6^{th}\)</span> variable the curve flattens and there does not seem to be much more gain to be had by adding more components. You may decide that it is important that for example <span class="math inline">\(80\%\)</span> of the variation is explained, in that case you would check the cumulative proportion and keep <span class="math display">\[7$ or $8\]</span> components. Or you could say that you will only keep components that explain at least $<span class="math inline">\(1\)</span> standard deviation of the data in which case you would keep <span class="math inline">\(6\)</span> components. A good idea is to check all three.</p>
+<p>A useful way to visualise the principle components is to plot them against each other. We can use colour to see how well the components separate data in terms of their death rate.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1"></a><span class="fu">fviz_pca_ind</span>(pca.vars, <span class="at">geom =</span> <span class="st">'point'</span>,</span>
+<span id="cb26-2"><a href="#cb26-2"></a>             <span class="at">habillage =</span> <span class="fu">cut</span>(cancer.dt<span class="sc">$</span>TARGET_deathRate,</span>
+<span id="cb26-3"><a href="#cb26-3"></a>                              <span class="co">#colour by deathrate </span></span>
+<span id="cb26-4"><a href="#cb26-4"></a>                             <span class="fu">quantile</span>(cancer.dt<span class="sc">$</span>TARGET_deathRate)), </span>
+<span id="cb26-5"><a href="#cb26-5"></a>             <span class="at">addEllipses =</span> T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Too few points to calculate an ellipse</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Removed 1 rows containing missing values (`geom_point()`).
+Removed 1 rows containing missing values (`geom_point()`).</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="Lab_4_High_Dimensional_Dataset_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1"></a><span class="fu">fviz_pca_ind</span>(pca.vars, <span class="at">geom=</span><span class="st">'point'</span>, <span class="at">axes =</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">3</span>),</span>
+<span id="cb29-2"><a href="#cb29-2"></a>             <span class="at">habillage =</span> <span class="fu">cut</span>(cancer.dt<span class="sc">$</span>TARGET_deathRate,</span>
+<span id="cb29-3"><a href="#cb29-3"></a>                             <span class="fu">quantile</span>(cancer.dt<span class="sc">$</span>TARGET_deathRate)), </span>
+<span id="cb29-4"><a href="#cb29-4"></a>             <span class="at">addEllipses =</span> T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Too few points to calculate an ellipse</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Removed 1 rows containing missing values (`geom_point()`).
+Removed 1 rows containing missing values (`geom_point()`).</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="Lab_4_High_Dimensional_Dataset_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section><section id="exercise-3.3" class="level3"><h3 class="anchored" data-anchor-id="exercise-3.3">Exercise 3.3</h3>
+<p>Discuss what you see and what your next steps would be.</p>
+<p>The datapoints in the above plot are the individual counties. They were artificially grouped and coloured by quartile. The x-axis in the first plot is the first principle component and the value between brackets is the proportion of the variance it explains. The y-axis in the first graph is the second component and in the second graph the counties are projected on the plane formed by the second and third components. The ellipses contain <span class="math inline">\(95\%\)</span> of the data in each group around a centroid which is indicated by a slightly larger datapoint.</p>
+<p>Looking at both graphs we can see that the ellipses overlap. This is not entirely surprising as deathrate is a continuous variable which we grouped artificially. To overcome this we could just look at the largest and lowest quartiles. Furthermore, each component simply describes the variation in a dataset. A dataset which contains a few variables that are associated with our outcome of interest and a lot more variables that are not will not be very good at separating individual observations of the outcome.</p>
+<p>This is not entirely the case with our dataset as while the elipses overlap, for the first two principal components they do separate slightly in the right order along the x and y axes. If you look closely you might see that the centroids are separated in the right order along the x-axis for the first principal component and marginally so along the y-axis for the second principal component. However, in the second graph the ellipses completely overlap. Removing a few variables which were not associated with our outcome of interest in the correlation matrix may help improve matters.</p>
+<p>Finally, so far we have not cleaned our data at all. The first two components contain the largest variation in our data it is therefore a good idea to examine the subset of most extreme values for the first two components as they are likely to contain outliers.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1"></a><span class="fu">fviz_pca_biplot</span>(pca.vars, <span class="at">geom=</span><span class="st">'point'</span>, <span class="at">repel =</span> T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Lab_4_High_Dimensional_Dataset_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section><section id="exercise-3.4" class="level3"><h3 class="anchored" data-anchor-id="exercise-3.4">Exercise 3.4</h3>
+<p>Discuss what you see in the above plot and how it relates to what you observed using the correlation matrix.</p>
+<p>The above plot is a visual representation of the linear composition of the components. The dots are the same datapoints then in the previous graph but without colour and each arrow represents the direction of each variable in the the 2D plane of the two first components. For the first component we would look at the variables with greatest magnitude along the x-axis, i.e.&nbsp;furthest to the left and furthest to the right. Doing so, you might notice that the first component mainly assigns large positive values to indicators of wealth and large negative values to indicators of poverty. The actual coefficients for each variable for the first two principal components is given below.</p>
+<p>For the second component we look at the variables with the greatest magnitude along the y-axis, i.e.&nbsp;the highest and lowest variables. For thi component we can see that <code>ethnic composition</code>, <code>age</code> and <code>household-type</code> carry the most weight. This roughly follows the blocks that we observed in the correlation plot which is not surprising given that the components are the eigenvectors of the variance-covariance matrix of the the predictor variables.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1"></a>pca.vars<span class="sc">$</span>rotation[,<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                                PC1         PC2
+incidenceRate          -0.006762473 -0.01215392
+medIncome               0.312065005 -0.07957927
+povertyPercent         -0.325050809 -0.11179937
+studyPerCap             0.031915144 -0.03291594
+MedianAge              -0.014077995  0.38927705
+MedianAgeMale          -0.003685915  0.38699180
+MedianAgeFemale        -0.029424532  0.37945598
+AvgHouseholdSize       -0.008927396 -0.15993825
+PercentMarried          0.199949592  0.29314363
+PctNoHS18_24           -0.157874749  0.07488792
+PctHS18_24             -0.104883118  0.17282295
+PctBachDeg18_24         0.204343027 -0.10364717
+PctHS25_Over           -0.146487018  0.24992096
+PctBachDeg25_Over       0.264965336 -0.15651173
+PctUnemployed16_Over   -0.259305150 -0.11710794
+PctPrivateCoverage      0.331562057  0.03693611
+PctEmpPrivCoverage      0.299454087 -0.08723845
+PctPublicCoverage      -0.305072171  0.16568834
+PctPublicCoverageAlone -0.329471490 -0.00507432
+PctWhite                0.172562064  0.29254726
+PctBlack               -0.181138036 -0.20523775
+PctAsian                0.109728603 -0.21147563
+PctOtherRace           -0.010309356 -0.15313506
+PctMarriedHouseholds    0.205447858  0.20956144</code></pre>
+</div>
+</div>
+</section></section><section id="regularisation-approaches" class="level1"><h1>4. Regularisation approaches</h1>
+<p>Ridge regression, lasso and elastic net are implemented in the <code>glmnet</code> package. There are two main functions provided by the package, <code>glmnet()</code> and <code>cv.glmnet()</code>. The first fits a regularised model for a series of values of the penalty parameter <span class="math inline">\(\lambda\)</span> (by default <span class="math inline">\(100\)</span>, but it may be truncated for small datasets). The second, run an internal cross-validation to identify which specific setting of <span class="math inline">\(\lambda\)</span> performs better when predicting the observations in the test set. Unfortunately, neither function accepts formulas to define models, but expects matrices and vectors as input. You can use the following function to facilitate the tranformation of a dataframe to a matrix as expected by the glmnet package.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1"></a>prepare.glmnet <span class="ot">&lt;-</span> <span class="cf">function</span>(data, <span class="at">formula=</span><span class="sc">~</span> .) {</span>
+<span id="cb35-2"><a href="#cb35-2"></a>                <span class="do">## create the design matrix to deal correctly with factor variables,</span></span>
+<span id="cb35-3"><a href="#cb35-3"></a>                <span class="do">## without losing rows containing NAs</span></span>
+<span id="cb35-4"><a href="#cb35-4"></a>                old.opts <span class="ot">&lt;-</span> <span class="fu">options</span>(<span class="at">na.action=</span><span class="st">'na.pass'</span>)</span>
+<span id="cb35-5"><a href="#cb35-5"></a>                x <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(formula, data)</span>
+<span id="cb35-6"><a href="#cb35-6"></a>                <span class="fu">options</span>(old.opts)</span>
+<span id="cb35-7"><a href="#cb35-7"></a>                </span>
+<span id="cb35-8"><a href="#cb35-8"></a>                <span class="do">## remove the intercept column, as glmnet will add one by default</span></span>
+<span id="cb35-9"><a href="#cb35-9"></a>                x <span class="ot">&lt;-</span> x[, <span class="sc">-</span><span class="fu">match</span>(<span class="st">"(Intercept)"</span>, <span class="fu">colnames</span>(x))]</span>
+<span id="cb35-10"><a href="#cb35-10"></a>                <span class="fu">return</span>(x)</span>
+<span id="cb35-11"><a href="#cb35-11"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>By default, the function uses all existing columns in the dataframe to create. We do not want the outcome variable to be in the matrix of predictors so we remove it before converting the rest of the dataframe to a matrix.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1"></a>impute.to.median <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb36-2"><a href="#cb36-2"></a>                        na.idx <span class="ot">&lt;-</span> <span class="fu">is.na</span>(x)</span>
+<span id="cb36-3"><a href="#cb36-3"></a>                        x[na.idx] <span class="ot">&lt;-</span> <span class="fu">median</span>(x, <span class="at">na.rm=</span><span class="cn">TRUE</span>)</span>
+<span id="cb36-4"><a href="#cb36-4"></a>                        <span class="fu">return</span>(x)</span>
+<span id="cb36-5"><a href="#cb36-5"></a>                    }</span>
+<span id="cb36-6"><a href="#cb36-6"></a></span>
+<span id="cb36-7"><a href="#cb36-7"></a>numcols.diab <span class="ot">&lt;-</span> diab01.dt[,.SD,.SDcols<span class="ot">=</span><span class="fu">sapply</span>(diab01.dt, is.numeric)] <span class="sc">%&gt;%</span> colnames</span>
+<span id="cb36-8"><a href="#cb36-8"></a>diab01.dt.imputed <span class="ot">&lt;-</span> diab01.dt <span class="sc">%&gt;%</span> <span class="fu">copy</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb36-9"><a href="#cb36-9"></a>                        .[, (numcols.diab) <span class="sc">:</span><span class="er">=</span> <span class="fu">lapply</span>(.SD, impute.to.median),.SDcols <span class="ot">=</span> numcols.diab]</span>
+<span id="cb36-10"><a href="#cb36-10"></a></span>
+<span id="cb36-11"><a href="#cb36-11"></a>ydiab01.dt <span class="ot">&lt;-</span> diab01.dt.imputed<span class="sc">$</span>Y <span class="co"># store the outcome separately</span></span>
+<span id="cb36-12"><a href="#cb36-12"></a>xdiab01.dt <span class="ot">&lt;-</span> <span class="fu">prepare.glmnet</span>(diab01.dt.imputed[,<span class="sc">!</span><span class="st">"PAT"</span>], <span class="at">formula=</span><span class="sc">~</span> . <span class="sc">-</span> Y) <span class="co"># exclude the outcome</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now we are finally ready to fit the first regularised model. By default, the function <code>glmnet()</code> will fit a linear regression with lasso penalty. To change it to ridge regression, set the alpha option to 0.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1"></a>fit.lasso <span class="ot">&lt;-</span> <span class="fu">glmnet</span>(xdiab01.dt, ydiab01.dt) <span class="co"># same as setting alpha=1</span></span>
+<span id="cb37-2"><a href="#cb37-2"></a>fit.ridge <span class="ot">&lt;-</span> <span class="fu">glmnet</span>(xdiab01.dt, ydiab01.dt, <span class="at">alpha=</span><span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>To see the trajectories of the coefficients for the various choices of <span class="math inline">\(\lambda\)</span> it is enough to use <code><a href="https://rdrr.io/r/graphics/plot.default.html">plot()</a></code> on the fitted objects.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1"></a><span class="fu">par</span>(<span class="at">mfrow=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>), <span class="at">mar=</span><span class="fu">c</span>(<span class="dv">4</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">2</span>))</span>
+<span id="cb38-2"><a href="#cb38-2"></a><span class="fu">plot</span>(fit.lasso, <span class="at">main=</span><span class="st">"Lasso trajectories"</span>)</span>
+<span id="cb38-3"><a href="#cb38-3"></a><span class="fu">plot</span>(fit.ridge, <span class="at">main=</span><span class="st">"Ridge trajectories"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Lab_4_High_Dimensional_Dataset_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>The x-axis indicates the <span class="math inline">\(\ell_1\)</span> norm of the regression coefficients. When the penalty parameter <span class="math inline">\(\lambda\)</span> is at its maximum value all coefficients are zero (null model). By decreasing the strength of the penalty term, the coefficients are allowed to increase. The numbers at the top of the plot count the number of nonzero variables. Note how for ridge all predictors become very soon nonzero, while for lasso this happens in a staggered way.</p>
+<p>The model coefficients depend on the choice of <span class="math inline">\(\lambda\)</span>. They can be found in the fields <span class="math inline">\(a_0\)</span> (for intercepts) and beta (for predictors) of the fitted objects, while the value of the corresponding penalty factor is stored in the lambda field. Assuming that we were interested in the 10-th value of <span class="math inline">\(\lambda\)</span>, we could retrieve the corresponding model coefficients by subsetting.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1"></a>idx <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb39-2"><a href="#cb39-2"></a>lambda10 <span class="ot">&lt;-</span> fit.lasso<span class="sc">$</span>lambda[idx]</span>
+<span id="cb39-3"><a href="#cb39-3"></a>fit.lasso<span class="sc">$</span>a0[idx] <span class="co"># intercept</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      s9 
+19.07142 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1"></a>fit.lasso<span class="sc">$</span>beta[, idx] <span class="co"># coefficients</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        AGE        SEXM         BMI          BP          TC         LDL 
+ 0.00000000  0.00000000  4.69765875  0.00000000  0.00000000  0.00000000 
+        HDL         GLU 
+-0.08637631  0.00000000 </code></pre>
+</div>
+</div>
+<p>Note that because of the regularization term, we are not able to produce estimates of the standard error and consequently p-values. The predict() method works in a similar way as for linear and logistic regression. However, unless otherwise specified through the s option, the returned values correspond again to all settings of (). Also, there are a few more types of values that can be obtained through this function (see ?predict.glmnet for more details).</p>
+<p>In most cases we are interested only in a specific setting of the penalty parameter, ideally one which will be most effective in prediction. To identify it, we can use function cv.glmnet() to perform cross-validation: this happens within the function, so we do not need to create a specific set of folds for that (although we may do if we were to learn or tune other parameters).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1"></a>fit.cv.lasso <span class="ot">&lt;-</span> <span class="fu">cv.glmnet</span>(xdiab01.dt, ydiab01.dt)</span>
+<span id="cb43-2"><a href="#cb43-2"></a>fit.cv.ridge <span class="ot">&lt;-</span> <span class="fu">cv.glmnet</span>(xdiab01.dt, ydiab01.dt, <span class="at">alpha=</span><span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Plotting the cross-validation curve allows us to inspect how prediction errors vary according to the amount of shrinkage applied.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1"></a><span class="fu">par</span>(<span class="at">mfrow=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>), <span class="at">mar=</span><span class="fu">c</span>(<span class="dv">4</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">2</span>))</span>
+<span id="cb44-2"><a href="#cb44-2"></a><span class="fu">plot</span>(fit.cv.lasso, <span class="at">main=</span><span class="st">"Lasso"</span>)</span>
+<span id="cb44-3"><a href="#cb44-3"></a><span class="fu">plot</span>(fit.cv.ridge, <span class="at">main=</span><span class="st">"Ridge"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Lab_4_High_Dimensional_Dataset_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>The plot displays the mean cross-validated error in red with bars corresponding to standard errors. The leftmost dotted line in each plot corresponds to the <span class="math inline">\(\lambda\)</span> that minimizes the error (<code>lambda.min</code> in the fitted object); the dotted line to the right corresponds to the largest value of <span class="math inline">\(\lambda\)</span> such that the error is within one standard error from the minimum (fit.lasso$lambda.1se in the fitted object). The curves obtained depend on the choice of the error measure used in cross-validation. By default, <code>cv.glmnet()</code> uses the mean square error for linear regression and deviance for logistic regression. However, these can be changed to mean absolute error (for linear regression) or to AUC or classification error (for logistic regression) by setting the appropriate choice of the type.measure option (see <code>?cv.glmnet</code>).</p>
+<p>Note that inside the object produced by <code>cv.glmnet()</code> there is a field called <code>glmnet.fit</code> which effectively stores what would have been created by using <code>glmnet()</code>. This is where the regression coefficients for all values of <span class="math inline">\(\lambda\)</span> are stored.</p>
+<section id="exercise-4.1" class="level3"><h3 class="anchored" data-anchor-id="exercise-4.1">Exercise 4.1</h3>
+<p>Using the <code>clev.csv</code> dataset (available on Learn):</p>
+<ul>
+<li>Set the random seed to 97696 and create 10 cross-validation folds.</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1"></a>clev.dt <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="st">"data/clev.csv"</span>)</span>
+<span id="cb45-2"><a href="#cb45-2"></a></span>
+<span id="cb45-3"><a href="#cb45-3"></a><span class="fu">set.seed</span>(<span class="dv">97696</span>)</span>
+<span id="cb45-4"><a href="#cb45-4"></a><span class="co"># Try running these with different seed values.</span></span>
+<span id="cb45-5"><a href="#cb45-5"></a></span>
+<span id="cb45-6"><a href="#cb45-6"></a>folds <span class="ot">&lt;-</span> <span class="fu">createFolds</span>(clev.dt<span class="sc">$</span>heart.disease, <span class="at">k=</span><span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<ul>
+<li>Model the occurrence of heart disease in each of the training folds using only <code>age</code>, <code>sex</code>, <code>blood pressure</code> and <code>number of vessels</code> as predictors (hint: see Lab 3).</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1"></a><span class="do">## function from Lab 3</span></span>
+<span id="cb46-2"><a href="#cb46-2"></a>glm.cv <span class="ot">&lt;-</span> <span class="cf">function</span>(formula, data, folds) {</span>
+<span id="cb46-3"><a href="#cb46-3"></a> regr.cv <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb46-4"><a href="#cb46-4"></a> <span class="cf">for</span> (fold <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(folds)) {</span>
+<span id="cb46-5"><a href="#cb46-5"></a> regr.cv[[fold]] <span class="ot">&lt;-</span> <span class="fu">glm</span>(formula, <span class="at">data=</span>data[<span class="sc">-</span>folds[[fold]],],</span>
+<span id="cb46-6"><a href="#cb46-6"></a> <span class="at">family=</span><span class="st">"binomial"</span>)</span>
+<span id="cb46-7"><a href="#cb46-7"></a> }</span>
+<span id="cb46-8"><a href="#cb46-8"></a> <span class="fu">return</span>(regr.cv)</span>
+<span id="cb46-9"><a href="#cb46-9"></a>}</span>
+<span id="cb46-10"><a href="#cb46-10"></a></span>
+<span id="cb46-11"><a href="#cb46-11"></a></span>
+<span id="cb46-12"><a href="#cb46-12"></a>lr.cv <span class="ot">&lt;-</span> <span class="fu">glm.cv</span>(heart.disease <span class="sc">~</span> age <span class="sc">+</span> sex <span class="sc">+</span> blood.pressure <span class="sc">+</span> num.vessels,</span>
+<span id="cb46-13"><a href="#cb46-13"></a> <span class="at">data=</span>clev.dt, folds)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<ul>
+<li>Predict the outcomes for observations in the test folds (hint: see Lab 3).</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1"></a><span class="do">## function from Lab 3</span></span>
+<span id="cb47-2"><a href="#cb47-2"></a>predict.cv <span class="ot">&lt;-</span> <span class="cf">function</span>(regr.cv, data, outcome, folds) {</span>
+<span id="cb47-3"><a href="#cb47-3"></a> pred.cv <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb47-4"><a href="#cb47-4"></a> <span class="cf">for</span> (fold <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(folds)) {</span>
+<span id="cb47-5"><a href="#cb47-5"></a> test.idx <span class="ot">&lt;-</span> folds[[fold]]</span>
+<span id="cb47-6"><a href="#cb47-6"></a> pred.cv[[fold]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">obs=</span>outcome[test.idx],</span>
+<span id="cb47-7"><a href="#cb47-7"></a> <span class="at">pred=</span><span class="fu">predict</span>(regr.cv[[fold]], <span class="at">newdata=</span>data,</span>
+<span id="cb47-8"><a href="#cb47-8"></a> <span class="at">type=</span><span class="st">"response"</span>)[test.idx])</span>
+<span id="cb47-9"><a href="#cb47-9"></a> }</span>
+<span id="cb47-10"><a href="#cb47-10"></a> <span class="fu">return</span>(pred.cv)</span>
+<span id="cb47-11"><a href="#cb47-11"></a> }</span>
+<span id="cb47-12"><a href="#cb47-12"></a>pred.lr.cv <span class="ot">&lt;-</span> <span class="fu">predict.cv</span>(lr.cv, clev.dt, clev.dt<span class="sc">$</span>heart.disease, folds)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<ul>
+<li>Report the mean cross-validated AUC for the test data (answer: <span class="math inline">\(0.804\)</span>).</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1"></a>auc.lr.cv <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="fu">length</span>(folds))</span>
+<span id="cb48-2"><a href="#cb48-2"></a><span class="fu">suppressMessages</span>(<span class="fu">invisible</span>({</span>
+<span id="cb48-3"><a href="#cb48-3"></a>  <span class="cf">for</span> (fold <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(folds)) {</span>
+<span id="cb48-4"><a href="#cb48-4"></a>    auc.lr.cv[fold] <span class="ot">&lt;-</span> <span class="fu">roc</span>(obs <span class="sc">~</span> pred, <span class="at">data=</span>pred.lr.cv[[fold]])<span class="sc">$</span>auc</span>
+<span id="cb48-5"><a href="#cb48-5"></a>  }</span>
+<span id="cb48-6"><a href="#cb48-6"></a>}))</span>
+<span id="cb48-7"><a href="#cb48-7"></a><span class="fu">round</span>(<span class="fu">mean</span>(auc.lr.cv), <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.804</code></pre>
+</div>
+</div>
+<ul>
+<li>In each training fold fit a ridge regression model using the same set of predictors and make a prediction of the outcomes on the test sets when using the optimal <span class="math inline">\(\lambda_{\text{min}}\)</span> found within each fold. Report the mean cross-validated AUC for the test data (answer: <span class="math inline">\(0.806\)</span>).</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1"></a>y.clev.dt <span class="ot">&lt;-</span> clev.dt<span class="sc">$</span>heart.disease</span>
+<span id="cb50-2"><a href="#cb50-2"></a>x.clev.dt <span class="ot">&lt;-</span> <span class="fu">prepare.glmnet</span>(clev.dt, <span class="sc">~</span> age <span class="sc">+</span> sex <span class="sc">+</span> blood.pressure <span class="sc">+</span> num.vessels)</span>
+<span id="cb50-3"><a href="#cb50-3"></a>ridge.cv <span class="ot">&lt;-</span> pred.ridge.cv <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb50-4"><a href="#cb50-4"></a><span class="cf">for</span> (fold <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(folds)) {</span>
+<span id="cb50-5"><a href="#cb50-5"></a> test.idx <span class="ot">&lt;-</span> folds[[fold]]</span>
+<span id="cb50-6"><a href="#cb50-6"></a> ridge.cv[[fold]] <span class="ot">&lt;-</span> <span class="fu">cv.glmnet</span>(x.clev.dt[<span class="sc">-</span>test.idx, ], y.clev.dt[<span class="sc">-</span>test.idx],</span>
+<span id="cb50-7"><a href="#cb50-7"></a> <span class="at">family=</span><span class="st">"binomial"</span>, <span class="at">alpha=</span><span class="dv">0</span>)</span>
+<span id="cb50-8"><a href="#cb50-8"></a> lambda.min <span class="ot">&lt;-</span> ridge.cv[[fold]]<span class="sc">$</span>lambda.min</span>
+<span id="cb50-9"><a href="#cb50-9"></a> pred.ridge.cv[[fold]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">obs=</span>y.clev.dt[test.idx],</span>
+<span id="cb50-10"><a href="#cb50-10"></a> <span class="at">pred=</span><span class="fu">predict</span>(ridge.cv[[fold]],</span>
+<span id="cb50-11"><a href="#cb50-11"></a> <span class="at">newx=</span>x.clev.dt[test.idx, ],</span>
+<span id="cb50-12"><a href="#cb50-12"></a> <span class="at">type=</span><span class="st">"response"</span>,</span>
+<span id="cb50-13"><a href="#cb50-13"></a> <span class="at">s=</span>lambda.min)[, <span class="dv">1</span>])</span>
+<span id="cb50-14"><a href="#cb50-14"></a> }</span>
+<span id="cb50-15"><a href="#cb50-15"></a>auc.ridge.cv <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="fu">length</span>(folds))</span>
+<span id="cb50-16"><a href="#cb50-16"></a></span>
+<span id="cb50-17"><a href="#cb50-17"></a><span class="fu">suppressMessages</span>(<span class="fu">invisible</span>({</span>
+<span id="cb50-18"><a href="#cb50-18"></a>  <span class="cf">for</span> (fold <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(folds)) {</span>
+<span id="cb50-19"><a href="#cb50-19"></a>    auc.ridge.cv[fold] <span class="ot">&lt;-</span> <span class="fu">roc</span>(obs <span class="sc">~</span> pred, </span>
+<span id="cb50-20"><a href="#cb50-20"></a>                              <span class="at">data =</span> pred.ridge.cv[[fold]])<span class="sc">$</span>auc</span>
+<span id="cb50-21"><a href="#cb50-21"></a>  }</span>
+<span id="cb50-22"><a href="#cb50-22"></a>}))</span>
+<span id="cb50-23"><a href="#cb50-23"></a></span>
+<span id="cb50-24"><a href="#cb50-24"></a><span class="fu">round</span>(<span class="fu">mean</span>(auc.ridge.cv), <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.806</code></pre>
+</div>
+</div>
+<ul>
+<li>Looking at the models fitted on the first cross-validation fold, compare the coefficients of the predictors from ridge regression to those from the unpenalised model. Which predictor was penalised least, and which was the most penalised?</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1"></a>lr.coefs <span class="ot">&lt;-</span> <span class="fu">coef</span>(lr.cv[[<span class="dv">1</span>]])[<span class="sc">-</span><span class="dv">1</span>] <span class="co"># ignore the intercept</span></span>
+<span id="cb52-2"><a href="#cb52-2"></a>lambda.idx <span class="ot">&lt;-</span> <span class="fu">which</span>(ridge.cv[[<span class="dv">1</span>]]<span class="sc">$</span>lambda <span class="sc">==</span> ridge.cv[[<span class="dv">1</span>]]<span class="sc">$</span>lambda.min)</span>
+<span id="cb52-3"><a href="#cb52-3"></a>ridge.coefs <span class="ot">&lt;-</span> ridge.cv[[<span class="dv">1</span>]]<span class="sc">$</span>glmnet.fit<span class="sc">$</span>beta[, lambda.idx]</span>
+<span id="cb52-4"><a href="#cb52-4"></a><span class="fu">round</span>(<span class="fu">data.frame</span>(lr.coefs, ridge.coefs, <span class="at">ratio=</span>ridge.coefs<span class="sc">/</span>lr.coefs), <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>               lr.coefs ridge.coefs ratio
+age               0.024       0.024 1.019
+sex               1.478       1.245 0.842
+blood.pressure    0.014       0.012 0.868
+num.vessels       1.150       0.961 0.836</code></pre>
+</div>
+</div>
+<p>By taking a ratio of the ridge coefficients and the logistic regression coefficients, we see that the number of vessels was the most penalized variable, while age was the least penalised.</p>
+<ul>
+<li>Build a lasso model using all available predictors apart from <code>chest.pain</code> (and the outcome!) following the same cross-validation approach as before. Report the mean cross-validated AUC for the test data (answer: <span class="math inline">\(0.889\)</span>).</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1"></a>x.clev.dt2 <span class="ot">&lt;-</span> <span class="fu">prepare.glmnet</span>(clev.dt, <span class="sc">~</span> . <span class="sc">-</span> chest.pain <span class="sc">-</span> heart.disease)</span>
+<span id="cb54-2"><a href="#cb54-2"></a>lasso.cv <span class="ot">&lt;-</span> pred.lasso.cv <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb54-3"><a href="#cb54-3"></a><span class="cf">for</span> (fold <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(folds)) {</span>
+<span id="cb54-4"><a href="#cb54-4"></a> test.idx <span class="ot">&lt;-</span> folds[[fold]]</span>
+<span id="cb54-5"><a href="#cb54-5"></a> lasso.cv[[fold]] <span class="ot">&lt;-</span> <span class="fu">cv.glmnet</span>(x.clev.dt2[<span class="sc">-</span>test.idx, ], y.clev.dt[<span class="sc">-</span>test.idx],</span>
+<span id="cb54-6"><a href="#cb54-6"></a> <span class="at">family=</span><span class="st">"binomial"</span>, <span class="at">alpha=</span><span class="dv">1</span>)</span>
+<span id="cb54-7"><a href="#cb54-7"></a> lambda.min <span class="ot">&lt;-</span> lasso.cv[[fold]]<span class="sc">$</span>lambda.min</span>
+<span id="cb54-8"><a href="#cb54-8"></a> pred.lasso.cv[[fold]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">obs=</span>y.clev.dt[test.idx],</span>
+<span id="cb54-9"><a href="#cb54-9"></a> <span class="at">pred=</span><span class="fu">predict</span>(lasso.cv[[fold]],</span>
+<span id="cb54-10"><a href="#cb54-10"></a> <span class="at">newx=</span>x.clev.dt2[test.idx, ],</span>
+<span id="cb54-11"><a href="#cb54-11"></a> <span class="at">type=</span><span class="st">"response"</span>,</span>
+<span id="cb54-12"><a href="#cb54-12"></a> <span class="at">s=</span>lambda.min)[, <span class="dv">1</span>])</span>
+<span id="cb54-13"><a href="#cb54-13"></a> }</span>
+<span id="cb54-14"><a href="#cb54-14"></a>auc.lasso.cv <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="fu">length</span>(folds))</span>
+<span id="cb54-15"><a href="#cb54-15"></a><span class="fu">suppressMessages</span>(<span class="fu">invisible</span>({</span>
+<span id="cb54-16"><a href="#cb54-16"></a>  <span class="cf">for</span> (fold <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(folds)) {</span>
+<span id="cb54-17"><a href="#cb54-17"></a>    auc.lasso.cv[fold] <span class="ot">&lt;-</span> <span class="fu">roc</span>(obs <span class="sc">~</span> pred, </span>
+<span id="cb54-18"><a href="#cb54-18"></a>                              <span class="at">data=</span>pred.lasso.cv[[fold]])<span class="sc">$</span>auc</span>
+<span id="cb54-19"><a href="#cb54-19"></a>  }</span>
+<span id="cb54-20"><a href="#cb54-20"></a>}))</span>
+<span id="cb54-21"><a href="#cb54-21"></a><span class="fu">round</span>(<span class="fu">mean</span>(auc.lasso.cv), <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.889</code></pre>
+</div>
+</div>
+<ul>
+<li>Find which predictors are retained at the optimal <span class="math inline">\(\lambda_{\text{min}}\)</span> in the first cross-validation fold and their number (answer: <span class="math inline">\(8\)</span>).</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1"></a>lambda.idx <span class="ot">&lt;-</span> <span class="fu">which</span>(lasso.cv[[<span class="dv">1</span>]]<span class="sc">$</span>lambda <span class="sc">==</span> lasso.cv[[<span class="dv">1</span>]]<span class="sc">$</span>lambda.min)</span>
+<span id="cb56-2"><a href="#cb56-2"></a>lasso.coefs <span class="ot">&lt;-</span> lasso.cv[[<span class="dv">1</span>]]<span class="sc">$</span>glmnet.fit<span class="sc">$</span>beta[, lambda.idx]</span>
+<span id="cb56-3"><a href="#cb56-3"></a>lasso.coefs[<span class="fu">abs</span>(lasso.coefs) <span class="sc">&gt;</span> <span class="dv">0</span>] <span class="co"># set of nonzero coefficients</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            sex         restecg  max.heart.rate exercise.angina         oldpeak 
+     0.34753579      0.04742542     -0.01041313      1.16998400      0.23207990 
+ slope.exercise     num.vessels            thal 
+     0.17299946      0.86449013      0.38641634 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1"></a><span class="fu">sum</span>(<span class="fu">abs</span>(lasso.coefs) <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="co"># number of nonzero coefficients</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 8</code></pre>
+</div>
+</div>
+</section></section></main><!-- /main column --><script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

@@ -1,0 +1,412 @@
+---
+title: "Lab 5 : Using Genetic Data to Predict Outcomes"
+author: "Johnny MyungWon Lee \n (Modified from Debby Lipschutz & Stuart McGurnaghan)"
+date: 2023-03-03
+date-format: "long"
+format:
+  html:
+    toc : true
+    code-line-numbers: true
+    code-link: true
+highlight-style: atom-one
+editor: visual
+---
+```{r setup, include=FALSE}
+#add all your packages here
+library(data.table)
+library(dplyr) #dplyr loads magrittr too
+library(caret)
+library(glmnet)
+library(kableExtra) #Allows table format with latex
+```
+
+# GWAS analyses
+
+This section does not rely on any previous knowledge of genetics.
+
+Given the size of the datasets and the large number of computations, usually genome-wide association studies are run with specialised software that is optimised to read data in binary format and can represent genetic data in memory efficiently (`plink`, `SNPTEST`, `RegScan`, etc). R is very inefficient memory-wise, and performs poorly in loops (that's a reason why using vectorised code is always to be preferred). However we can still perform the same analyses in R, provided that datasets are not too large.
+
+`SNP`'s are locations on the human genome that differ in individuals across the population (each `SNP` on each of the $23$ pairs of chromosomes in humans has a `SNP` identifier for the purposes of these labs a position). Each `SNP` has two possible alleles and when we deal with the SNP data, we deal with one of the two. This is called the `reference` allele and each `SNP` will have the value $0$, $1$, or $2$. assigned. Note that the reference allele may or may not be the minor allele. This means that the minority of the population is expected to have that allele. The reference alleles are set by looking at sample of the population who have donated their DNA to a study. An example of this would be a `SNP` that has a reference allele of `T` e.g. `rs4506565_T` and a person is assigned a value of $2$ for that `SNP` (opposed to $0$ or $1$), then that person would have two copies of `T` reference allele (one from each parent). If the alternate allele in the population was `C`, this person would have no copies of the alternate. The association test is performed on the groups of people with and without the reference allele and the phenotype (observable characteristic or trait) of interest.
+
+The simplest types of association studies rely on testing one `SNP` at a time for association with the outcome: for a continuous trait, we use linear regression, for a binary trait we use logistic regression.
+
+In real analyses, it is common to include other relevant covariates in the models, to ensure that the `SNP` association is independent of those covariates.In particular, models are adjusted by an indicator variable corresponding to the cohort of origin (as they may have been genotyped with different technologies, or may have differences in the way their phenotypes are measured) and by the first few principal components (often $5$-$10$ PCs) to remove possible confounding effects due to population stratification. It is also increasingly common to use linear mixed models to account for population structure and relatedness between individuals.
+
+In what follows, we will perform *crude associations*, that is not adjusted for other covariates, bearing in mind that it is a simplification. We start by reading file `chrom21.csv` (available on Learn), which contains $1500$ `SNP`s from chromosome $21$ as well as a column with a quantitative outcome (the first column).
+
+```{r}
+chrom21 <- fread("data/chrom21.csv")
+```
+
+Also genetic data can contain missing values, due to genotyping errors or poor quality reads that are discarded at the quality control step.
+
+```{r}
+kable(table(is.na(chrom21)), caption = "Missing Values") |> 
+  kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+A common approach to impute missing values in a `SNP` is by replacing them with the mean of the `SNP`: this corresponds to assign the expected allele dosages to the missing entries.
+
+```{r}
+for (colnm in colnames(chrom21[, -1])) {
+  chrom21[[colnm]][is.na(chrom21[[colnm]])] <- mean(chrom21[[colnm]], na.rm = T)
+}
+```
+
+Given that we have a continuous outcome, to test for a crude association of a `SNP` it is sufficient to run a simple linear regression model, then check the summary statistics.
+
+```{r}
+snp1 <- lm(outcome ~ snp1, data = chrom21)
+kable(coef(summary(snp1)), caption = "Summary Statistics") |> 
+  kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+This specific `SNP` is not associated with the outcome.
+
+It is clear that we do not want to explicitly formulate a model for each `SNP` in the dataset, but want to create a small function that could be used within a `for` loop to automate the process.
+
+```{r}
+# run univariate tests of associations for all SNPs(columns of az) 
+univ.lm.test <- function(x, y) { 
+  stopifnot (length(x) == length(y)) 
+  regr <- lm(y ~ x) 
+  # remove the row corresponding to the intercept and the column containing 
+  # the t-value, then convert to a data table 
+  output <- data.table(coef(summary(regr)))[-1, -3]
+  # assign better column names 
+  colnames(output) <- c("beta", "std.error", "p.value")
+  output
+}
+```
+
+With this function we can run the same model as before by running the following command.
+
+```{r}
+kable(univ.lm.test(chrom21$snp1, chrom21$outcome), 
+      caption = "Summary Statistics using Function") |> 
+  kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+Now this can be automated in a loop to run the association test over all `SNP`s: this may take several seconds, depending on the processor speed (as all models are independent, the process can be parallelised).
+
+```{r}
+crude <- NULL 
+for (snp in 2:ncol(chrom21)) {
+  # skip column 1 as it contains the outcome 
+  crude <- rbind(crude, univ.lm.test(chrom21[[snp]], 
+                  chrom21$outcome) ) 
+  } 
+# add column of snp identifiers 
+crude <- cbind(snp = colnames(chrom21)[-1], crude)
+```
+
+These associations can be visualised through a volcano plot, where strongest associations are those that are towards the top (small p-values) and further to the sides (large effect sizes) of the plot. For reference we also draw a horizontal line corresponding to the standard genome-wide significance level of $5 \times 10^-8$. Note that in case of a logistic regression model, a volcano plot should use the log-odds ratio (that is, the regression coefficient) on the $x$ axis. Using odds ratios would produce an asymmetric plot, as odds ratios are bounded below by zero, but are unbounded above.
+
+```{r}
+plot(crude[, .(beta, -log10(p.value))], pch = 19, cex = 0.5, 
+      main = "Volcano plot", 
+      xlab = "Coefficient", 
+      ylab = "-log10(p-value)")
+abline(h = -log10(5e-8), lty = 2, col = "red") # genome-wide significance threshold
+```
+
+A Manhattan plot is better suited to visualise the ordering of `SNP`s along the chromosome, and it can show that hits generally do not appear alone, but they form spikes because of linkage disequilibrium (`SNP`s that are closer together have more chances of being transmitted together).
+
+```{r}
+plot(-log10(crude$p.value), 
+     pch = 19, cex = 0.5, 
+     main = "Manhattan plot", 
+     xlab = "Locus on chromosome 21", 
+     ylab = "-log10(p-value)"
+     )
+abline(h = -log10(5e-8), lty = 2, col = "red") # genome-wide significance threshold
+```
+
+Note that in this particular example, we did not have genetic positions of each `SNP`: if we did, we should use them to better represent the spread of `SNP`s on the chromosome. Also, this dataset contains only one chromosome: if we had more than one, it would be better to differentiate chromosomes by colour, to make it easier to pinpoint where the hits are.
+
+# Genetic Risk Scores
+
+The `SNP`s that are most strongly associated with a specific trait or disease outcome can be used to build a genetic risk score (or polygenic risk score). A threshold on the p-value for such scores does not need to be as strict as the genome-wide significance threshold: often $10^{-5}$ or $10^{-4}$ are used, and in some cases those can be relaxed even further.
+
+```{r}
+# subset of snps to enter the genetic risk score
+chrom21.grs <- chrom21[, .SD, .SDcols = crude[p.value < 1e-5]$snp]
+```
+
+We can build a simple genetic risk score for each patient simply by summing the allele counts across all the associated `SNP`s (*unweighted score*). To take the direction of the effect into consideration, we switch the sign for the `SNP`s that have an inverse association: we use function `sign()` for this purpose, which returns $1$ for positive elements, and $-1$ for negative elements.
+
+```{r}
+snps.grs <- crude[p.value < 1e-5] 
+chrom21.grs <- chrom21[, .SD, .SDcols = crude[p.value < 1e-5]$snp] 
+unweighted.score <- as.matrix(chrom21.grs) %*% sign(snps.grs$beta) 
+```
+
+Once a score is built, it can be considered as an additional predictor and tested for association with the outcome.
+
+```{r}
+mod.unweighted <- lm(chrom21$outcome ~ unweighted.score)
+kable(coef(summary(mod.unweighted)), 
+      caption = "Summary Statistics with Unweighted Score") |> 
+  kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+summary(mod.unweighted)
+```
+
+More commonly, however, the `SNP`s that enter a score are weighted by their regression coefficient, so that not only the direction of the effect is taken into consideration, but also so that loci with larger effect contribute more to the final score. Whenever people refer to genetic (or polygenic) risk scores, it can be assumed that they refer to the weighted version.
+
+```{r}
+weighted.score <- as.matrix(chrom21.grs) %*% snps.grs$beta 
+mod.weighted <- lm(chrom21$outcome ~ weighted.score)
+kable(coef(summary(mod.weighted)), 
+      caption = "Summary Statistics with Weighted Score") |> 
+  kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+summary(mod.weighted)
+```
+
+The weighted score seems to perform marginally better, not only as measured by the Wald test p-value, but also by looking at the adjusted $R^2 = 0.316$ for the weighted score versus $0.301$ for the unweighted score. This tells us that the weighted score explains a bit more of the variance in the outcome.
+
+Note that we cannot compare the regression coefficients directly, as the two scores are scaled differently: either we should have standardised the two scores to have the same standard deviation before fitting the models (as we did in **Lab 2**), or we correct the regression coefficients by multiplying each of them by the standard deviation of their corresponding predictor. Here we follow the latter approach, so the standardised regression coefficients become:
+
+```{r}
+# standardised regression coefficients 
+beta.unweighted.std <- coef(mod.unweighted)[2] * sd(unweighted.score) 
+beta.weighted.std <- coef(mod.weighted)[2] * sd(weighted.score)
+kable(round(c(beta.unweighted.std, beta.weighted.std), 3), 
+      caption = "Standardised Regression Coefficients") |> 
+  kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+Also according to this criterion, it appears that the weighted score is a marginally better estimate of the genetic risk for the quantitative trait under study.
+
+What would happen if we did not filter the `SNP`s that contribute to the genetic risk score? This would consider all the `SNP`s in the dataset as being related to the outcome under study: in some cases, it is not reasonable to expect that a score computed in this way would perform particularly well. However, complex traits (such as height) may be better explained by a large number of small effects spread throughout the genome than by a reduced set of most strongly associated `SNP`s.
+
+```{r}
+# ensure that the ordering of snps ts respected
+stopifnot(colnames(chrom21)[-1] == crude$snp) 
+all.score <- as.matrix(chrom21[, -1]) %*% crude$beta
+# standardize the score to allow for direct comparison of effect sizes 
+all.score <- all.score / sd(all.score) 
+mod.all <- lm(chrom21$outcome ~ all.score)
+kable(coef(summary(mod.all)), 
+      caption = "Summary Statistics with all SNPs") |> 
+  kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+In this specific instance, using all `SNP`s produces a significant improvement in the fit of the model ($R^2$ is $0.667$), as well as in effect size ($0.952$). However, remember that the true assessment of performance of a genetic risk score, as for any other predictor, can be done only on withdrawn data (on a new set of observations or within a cross-validation setting).
+
+# Predicting with scores
+
+Let us consider the case of a single training-test split, which can be created by using function `createDataPartition()` from the `caret` package.
+
+```{r}
+set.seed(1) 
+train.idx <- createDataPartition(chrom21$outcome, p = 0.7)$Resample1
+```
+
+We will use the training set for two purposes:
+
+1.  Run association tests for all the `SNP`s considered individually, and use the summary statistics to develop a genetic risk score.
+2.  Learn the regression coefficients for a model that uses the score.
+
+After this, we will be able to build genetic risk scores for the observations in the test set and make a prediction of the outcome.
+
+We start by testing each `SNP` for association with the outcome: this uses the same approach developed earlier, but this time we restrict the data to the training set.
+
+```{r}
+chrom21.train <- chrom21[train.idx] 
+crude <- NULL
+for (snp in 2:ncol(chrom21.train)) { 
+  crude <- rbind(crude,
+                 univ.lm.test(chrom21.train[[snp]], chrom21.train[[1]])) 
+  }
+# add column of snp identifiers
+crude <- cbind(snp=colnames(chrom21.train)[-1], crude)
+```
+
+Now we can create a weighted score by using the top `SNP`s.
+Note that we do it for all samples, also those in the test set: this is fine, we are not using the outcome variable, but just summing up the columns of the `SNP` matrix weighted by the coefficients learnt on the training set. Having a score for all samples will make it easier further on when testing the performance of the score.
+
+```{r}
+snps.grs <- crude[p.value < 1e-5]
+chrom21.grs <- chrom21[, .SD, .SDcols = crude[p.value < 1e-5]$snp] 
+weighted.score <- as.matrix(chrom21.grs) %*% snps.grs$beta
+```
+
+It is time to fit a model with the score variable: here it is important to use only the training set (defined by the subset option), as we are using the outcome to learn the regression coefficients.
+
+```{r}
+model.score <- lm(outcome ~ weighted.score, data=chrom21, subset=train.idx)
+```
+
+We are finally ready to predict the observations in the test set.
+Given that the `weighted.score` is outside of the `chrom21` dataset, the easiest way to achieve this, is to predict all observations and then discard those that are in the training set.
+
+```{r}
+pred <- predict(model.score, newdata=chrom21)[-train.idx]
+```
+
+As a measure of performance we can compute the correlation coefficient between predicted and observed outcome (restricted to samples in the test set), or the square of that (corresponding to the $R^2$).
+
+```{r}
+round(cor(pred, chrom21$outcome[-train.idx]), 3)
+round(cor(pred, chrom21$outcome[-train.idx])^2, 3)
+```
+
+# GWAS meta-analysis
+
+When genome-wide association studies of the same phenotype are performed in multiple independent studies, it is common to merge the results by performing a meta-analysis. 'This has the benefit of increasing the statistical power and reducing false-positive findings (type I error rate). Again, this type of analysis is most often done through specialised software (such as `plink`, `METAL`, `GWAMA`, etc) which can perform several checks on the input files and produce helpful diagnostics.
+
+Before being able to perform a meta-analysis, the summary statistics from the studies need to be harmonised, to ensure that the effect sizes reported refer to the same allele. Thus, if two studies used a different effect allele, the sign for the effect size of one of them should be switched.
+
+Files `OPN_sub_study1.txt` and `OPN_sub_study2.txt` contain a small subset of results from two different GWASs run on Osteopontin (OPN) a protein that can be measured in blood serum.
+
+```{r}
+# Use fread() to load data. It does not convert strings to factors 
+gwas1 <- fread("data/OPN_sub_study1.txt") 
+gwas2 <- fread("data/OPN_sub_study2.txt") 
+```
+
+We need to harmonise the two datasets: in this specific case it is enough to order them by chromosome and position, but we need to ensure that the `SNP` identifiers correspond.
+
+```{r}
+gwas1 <- gwas1[rsid %in% gwas2$rsid]
+gwas2 <- gwas2[rsid %in% gwas1$rsid] 
+
+# order by chromosome and position 
+gwas1 <- gwas1[order(chromosome, position)] 
+gwas2 <- gwas2[order(chromosome, position)]
+all.equal(gwas1$rsid, gwas2$rsid) 
+```
+
+Ignore the differences in position between the two studies: they may have been carried out using different genome builds (the relative order of `SNP`s is unaffected). What matters is that `SNP` names and both alleles match, and that both studies report the effect size on the same allele. In this example, both studies considered Al to be the effect allele, but different studies may have different conventions, and they need to be harmonised as well in case of discrepancies.
+
+We start by finding which `SNP`s have both alleles matching, and which would match if the alleles were flipped.
+
+```{r}
+both.ok <- gwas1$A1 == gwas2$A1 & gwas1$A2 == gwas2$A2 
+flipped <- gwas1$A1 == gwas2$A2 & gwas1$A2 == gwas2$A1
+kable(table(both.ok, flipped), 
+      caption = "SNPs with Alleles Matching") |> 
+  kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+In this case, we can see that the alleles either match already, or they match after flipping them. If both alleles do not match even after swapping them, that `SNP` cannot be meta-analysed. This could be caused by a genotyping or imputation error, or because of some other discrepancy in the GWAS pipelines adopted by the different studies.
+
+The effect sizes of the `SNP`s which we identified to have alleles flipped need to have their direction of effect swapped in one of the studies before entering the meta-analysis. Here we swap the sign for the second study, but this is an arbitrary choice.
+
+```{r}
+beta1 <- gwas1$Effect_A1
+beta2 <- gwas2$Effect_A1
+beta2[flipped] <- -beta2[flipped]
+```
+
+Finally we are ready to perform a fixed effect meta-analysis by using inverse variance weighting.
+
+```{r}
+weight.gwas1 <- 1 / gwas1$StdErr_A1^2 
+weight.gwas2 <- 1 / gwas2$StdErr_A1^2
+```
+
+By looking at the weights assigned to the two studies, it appears that in general the second study is more powered.
+
+```{r}
+kable(t(head(weight.gwas1)), 
+      caption = "Weight of 1st GWAS") |> 
+  kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+kable(t(head(weight.gwas2)), 
+      caption = "Weight of 2nd GWAS") |> 
+  kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+The compuation of the meta-analysis effect size is a weighted sum of the effect sizes from each study, weighted according to the weight just derived.
+
+```{r}
+beta.ma <- (weight.gwas1 * beta1 + weight.gwas2 * beta2) / (weight.gwas1 + weight.gwas2) 
+se.ma <- sqrt(1 / (weight.gwas1 + weight.gwas2))
+```
+
+Note that by combining the two studies through a meta-analysis we have increased the power. This can be seen by comparing the p-values of the first study (which has them available already) to the meta-analysis p-values.
+
+```{r}
+pval.ma <- 2 * pnorm(abs(beta.ma / se.ma), lower.tail = FALSE)
+plot(-log10(gwas1$P.value), -log10(pval.ma), 
+     xlim = c(0, 8), ylim = c(0, 16), 
+     xlab = "p-values from gwas1", 
+     ylab = "p-values from meta-analysis",
+     main = "P-values Comparison between GWAS and Meta-Analysis"
+     )
+```
+
+\newpage
+
+# Practical Exercises
+## Question 1. 
+Using file `chrom21.csv` (available on Learn):
+
+- Impute the missing values in the `SNP`s using mean imputation method.
+
+```{r}
+#Answer in this chunk
+```
+
+- Set the random seed to $1$ and create $5$ cross-validation folds.
+
+```{r}
+#Answer in this chunk
+```
+
+- Within each training fold, perform an association study for all `SNP`s in the dataset (hint: store the data table of results as an element in a list) and report the most associated `SNP`. (answer: snp969, snp969, snp969, snp969, snp969).
+
+```{r}
+#Answer in this chunk
+```
+
+- Within each training fold, build a weighted genetic risk score that uses `SNP`s filtered at p-value $<10^{-4}$, as well as a weighted genetic risk score that uses all available `SNP`s (hint: build the scores for all observations, also those in the test set). Build the cross-validation folds for filtered `SNP`s and all `SNP`s.
+
+```{r}
+#Answer in this chunk
+```
+
+- Within each training fold, fit a linear regression models for each score. (hint: store each regression object as an element in a list).
+
+```{r}
+#Answer in this chunk
+```
+
+- Use the two genetic risk scores to predict the outcome in each of the test folds and compute the correlation coefficient between the observed outcome and the predicted outcome. Report the average correlation over all folds. (answer: $0.556$, $0.739$).
+
+```{r}
+#Answer in this chunk
+```
+
+## Question 2
+Using file `dpt2.txt` (available on Learn):
+
+- Sort the data table in increasing order of chromosome number and base pairs (column `pos`).
+
+```{r}
+#Answer in this chunk
+```
+
+- Using function `as.numeric()`, convert the `pos` column from integer to numeric (to avoid overflow). Add column `cum.pos` to the data table to contain the cumulative sum of the positions (use function `cumsum()`), and assert that no `NA`s were produced. 
+
+```{r}
+#Answer in this chunk
+```
+
+- Create a Manhattan plot that orders the `SNP`s according to their cumulative position along the genome
+
+```{r}
+#Answer in this chunk
+```
+
+- Redo the plot by using alternating colours for adjacent chromosomes, and add a horizontal line corresponding to the standard genome-wide significance threshold. 
+
+```{r}
+#Answer in this chunk
+```
+
+- Produce a volcano plot for this set of results, using a different colour for `SNP`s that have minor allele frequency (MAF) $< 5\%$
+Volcano plot:
+```{r}
+#Answer in this chunk
+```

@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.2.269">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Johnny Lee">
+<meta name="dcterms.date" content="2023-01-01">
+
+<title>Biomedical Data Science (MATH11111) Assignment 1</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<script src="assignment1_files/libs/clipboard/clipboard.min.js"></script>
+<script src="assignment1_files/libs/quarto-html/quarto.js"></script>
+<script src="assignment1_files/libs/quarto-html/popper.min.js"></script>
+<script src="assignment1_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="assignment1_files/libs/quarto-html/anchor.min.js"></script>
+<link href="assignment1_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="assignment1_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="assignment1_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="assignment1_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="assignment1_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Biomedical Data Science (MATH11111) Assignment 1</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Johnny Lee </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">January 1, 2023</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="due-on-wednesday-7th-of-march-2022-500pm" class="level2">
+<h2 class="anchored" data-anchor-id="due-on-wednesday-7th-of-march-2022-500pm"><strong>Due on Wednesday, 7th of March 2022, 5:00pm</strong></h2>
+<p>The assignment is marked out of 100 points, and will contribute to 20% of your final mark. Please complete this assignment using <strong>rmarkdown/quarto file and knit/render this document in PDF format</strong> and submit using the <strong>gradescope link on Learn</strong>. If you cannot knit/render to PDF directly, knit/render it to word and you should be able to either convert to PDF or print it and scan to PDF using a scanning app on your phone. If you have any code that does not run you will be able to knit/render the document so comment it as you might still get some grades for partial code.</p>
+<p><strong>Clear and reusable code will be rewarded so pay attention to indentation, choice of variable identifiers, comments, error checking, etc.</strong> Also, do not load more than 5 packages. An initial code chunk is provided after each subquestion but <strong>create as many chunks as you feel is necessary</strong> to make a clear report. Add plain text explanations in between the chunks as and when required and any comments necessary within code chunks to make it easier to follow your code/reasoning.</p>
+</section>
+<section id="problem-1-25-points" class="level2">
+<h2 class="anchored" data-anchor-id="problem-1-25-points">Problem 1 (25 points)</h2>
+<p>Files <strong><em>longegfr1.csv</em></strong> and <strong><em>longegfr2.csv</em></strong> (available on Learn) contain information regarding a longitudinal dataset containing records on 250 patients. For each subject, eGFR (estimated glomerular filtration rate, a measure of kidney function) was collected at irregularly spaced time points: variable <code>fu.years</code> contains the follow-up time (that is, the distance from baseline to the date when each eGFR measurement was taken, expressed in years).</p>
+<section id="problem-1.a-4-points" class="level3">
+<h3 class="anchored" data-anchor-id="problem-1.a-4-points">Problem 1.a (4 points)</h3>
+<p>Convert the files to data tables and merge in an appropriate way into a single data table, then order the observations according to subject identifier and follow-up time. Print first 15 values of the new dataset.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Answer in this chunk</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="problem-1.b-6-points" class="level3">
+<h3 class="anchored" data-anchor-id="problem-1.b-6-points">Problem 1.b (6 points)</h3>
+<p>Compute the average eGFR and length of follow-up for each patient, then tabulate the number of patients with average eGFR in the following ranges: (0, 15], (15, 30], (30, 60], (60,90], (90, <code>max(eGFR)</code>). Count and report the number of patients with missing average eGFR.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Answer in this chunk</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="problem-1.c-6-points" class="level3">
+<h3 class="anchored" data-anchor-id="problem-1.c-6-points">Problem 1.c (6 points)</h3>
+<p>For patients with average eGFR in the (<span class="math inline">\(90\)</span>,<code>max(eGFR)</code>) range, collect in a data table (or tibble) their identifier, sex, age at baseline, average eGFR, time of last eGFR reading and number of eGFR measurements taken.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Answer in this chunk</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="problem-1.d-9-points" class="level3">
+<h3 class="anchored" data-anchor-id="problem-1.d-9-points">Problem 1.d (9 points)</h3>
+<p>For patients 3, 37, 162 and 223: - Plot the patient’s eGFR measurements as a function of time. - Fit a linear regression model and add the regression line to the plot. - Report the 95% confidence interval for the regression coefficients of the fitted model. - Using a different colour, plot a second regression line computed after removing the extreme eGFR values (one each of the highest and the lowest value).</p>
+<p><strong><em>(All plots should be displayed in the same figure. The plots should be appropriately labelled and the results should be accompanied by some explanation as you would communicate it to a colleague with a medical rather than statistical background.)</em></strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Answer in this chunk</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="problem-2-25-points" class="level2">
+<h2 class="anchored" data-anchor-id="problem-2-25-points">Problem 2 (25 points)</h2>
+<p>The MDRD4 and CKD-EPI equations are two different ways of estimating the glomerular filtration rate (eGFR) in adults: <span class="math display">\[\text{MDRD4} = 175 \times (\text{Scr})^{-1.154} \times \text{Age}^{-0.203} [\times0.742 \text{ if female}] [\times 1.212 \text{ if black}]\]</span>, and <span class="math display">\[\text{CKD-EPI} = 141 \times \min(\text{Scr}/\kappa, 1)^{\alpha} \times \max(\text{Scr}/\kappa, 1)^{-1.209}\times 0.993^{\text{Age}} [\times 1.018 \text{ if female}] [\times 1.159 \text{ if black}]\]</span>, (1) where: * SCR is serum creatinine (in mg/dL) * <span class="math inline">\(\kappa\)</span> is 0.7 for females and 0.9 for males * <span class="math inline">\(\alpha\)</span> is -0.329 for females and -0.411 for males</p>
+<section id="problem-2.a-7-points" class="level3">
+<h3 class="anchored" data-anchor-id="problem-2.a-7-points">Problem 2.a (7 points)</h3>
+<p>For the <strong><em>scr.csv</em></strong> dataset available on Learn, examine a summary of the distribution of serum creatinine and report the inter-quartile range. If you suspect that some serum creatinine values may have been reported in µmol/L convert them to mg/dL by dividing by 88.42. Justify your choice of values to convert and examine the distribution of serum creatinine following any changes you have made.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Answer in this chunk</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="problem-2.b-11-points" class="level3">
+<h3 class="anchored" data-anchor-id="problem-2.b-11-points">Problem 2.b (11 points)</h3>
+<p>Compute the eGFR according to the two equations. Report (rounded to the second decimal place) mean and standard deviation of the two eGFR vectors and their Pearson correlation coefficient. Also report the same quantities according to strata of MDRD4 eGFR: 0-60, 60-90 and &gt; 90.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Answer in this chunk</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="problem-2.c-7-points" class="level3">
+<h3 class="anchored" data-anchor-id="problem-2.c-7-points">Problem 2.c (7 points)</h3>
+<p>Produce a scatter plot of the two eGFR vectors, and add vertical and horizontal lines (i.e.) corresponding to median, first and third quantiles. Is the relationship between the two eGFR equations linear? Justify your answer.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Answer in this chunk</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="problem-3-31-points" class="level2">
+<h2 class="anchored" data-anchor-id="problem-3-31-points">Problem 3 (31 points)</h2>
+<p>You have been provided with electronic health record data from a study cohort. Three CSV (Comma Separated Variable) files are provided on learn.</p>
+<p>The first file is a cohort description file <strong><em>cohort.csv</em></strong> file with fields: * <code>id</code> = study identifier * <code>yob</code> = year of birth * <code>age</code> = age at measurement * <code>bp</code> = systolic blood pressure * <code>albumin</code> = last known albuminuric status (categorical) * <code>diabetes</code> = diabetes status</p>
+<p>The second file <strong><em>lab1.csv</em></strong> is provided by a laboratory after measuring various biochemistry levels in the cohort blood samples. Notice that a separate lab identifier is used to anonymise results from the cohort. The year of birth is also provided as a check that the year of birth aligns between the two merged sets. * <code>LABID</code> = lab identifier * <code>yob</code> = year of birth * <code>urea</code> = blood urea * <code>creatinine</code> = serum creatinine * <code>glucose</code> = random blood glucose</p>
+<p>To link the two data files together, a third linker file <strong><em>linker.csv</em></strong> is provided. The linker file includes a <code>LABID</code> identifier and the corresponding cohort <code>id</code> for each person in the cohort.</p>
+<section id="problem-3.a-6-points" class="level3">
+<h3 class="anchored" data-anchor-id="problem-3.a-6-points">Problem 3.a (6 points)</h3>
+<p>Using all three files provided on learn, load and merge to create a single data table based dataset <strong><em>cohort.dt</em></strong>. This will be used in your analysis. Perform assertion checks to ensure that all identifiers in <strong><em>cohort.csv</em></strong> have been accounted for in the final table and that any validation fields are consistent between sets. After the checks are complete, drop the identifier that originated from <strong><em>lab1.csv</em></strong> dataset <code>LABID</code>. Ensure that a single <code>yob</code> field remains and rename it to <code>yob</code>. Ensure that the <code>albumin</code> field is converted to a factor and the ordering of the factor is <code>1=“normo”</code>, <code>2=“micro”</code>, <code>3=“macro”</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Answer in this chunk</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="problem-3.b-10-points" class="level3">
+<h3 class="anchored" data-anchor-id="problem-3.b-10-points">Problem 3.b (10 points)</h3>
+<p>Create a copy of the dataset where you will impute all missing values. Update any missing age fields using the year of birth. Perform mean imputation for all other continuous variables by writing a single function called <code>impute.to.mean()</code> and impute to mean, impute any categorical variable to the mode. Compare the each distribution of the imputed and non-imputed variables and decide which ones to keep for further analysis. Justify your answer.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Answer in this chunk</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="problem-3.c-6-points" class="level3">
+<h3 class="anchored" data-anchor-id="problem-3.c-6-points">Problem 3.c (6 points)</h3>
+<p>Plot a single figure containing boxplots of potential predictors for diabetes grouped by cases and controls and use these to decide which predictors to keep for future analysis. For any categorical variables create a table instead. Justify your answers.</p>
+<div class="cell">
+
+</div>
+</section>
+<section id="problem-3.d-9-points" class="level3">
+<h3 class="anchored" data-anchor-id="problem-3.d-9-points">Problem 3.d (9 points)</h3>
+<p>Use your findings from the previous exercise and fit an appropriate model of <code>diabetes</code> with two predictors. Print a summary and explain the results as you would communicate it to a colleague with a medical rather than statistical background.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Answer in this chunk</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="problem-4-19-points" class="level2">
+<h2 class="anchored" data-anchor-id="problem-4-19-points">Problem 4 (19 points)</h2>
+<section id="problem-4.a.-9-points" class="level3">
+<h3 class="anchored" data-anchor-id="problem-4.a.-9-points">Problem 4.a. (9 points)</h3>
+<p>Add a third predictor to the final model from <strong>problem 3</strong>, perform a likelihood ratio test to compare both models and report the p-value for the test. Is there any support for the additional term? Plot a ROC curve for both models and report the AUC, explain the results as you would communicate it to a colleague with a medical rather than statistical background.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Answer in this chunk</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="problem-4.b-10-points" class="level3">
+<h3 class="anchored" data-anchor-id="problem-4.b-10-points">Problem 4.b (10 points)</h3>
+<p>Perform 10-folds cross validation for your chosen model and report the mean cross validated AUCs.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Answer in this chunk</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 4</code></pre>
+</div>
+</div>
+<p>The <code>echo: false</code> option disables the printing of code (only output is displayed).</p>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

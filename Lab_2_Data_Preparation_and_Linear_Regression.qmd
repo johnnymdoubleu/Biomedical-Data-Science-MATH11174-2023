@@ -1,0 +1,489 @@
+---
+title: "Lab 2: Data Preparation and Linear Regression"
+author: "Johnny MyungWon Lee \n (Modified from Debby Lipschutz & Stuart McGurnaghan)"
+date: 2023-02-03
+date-format: "long"
+format:
+  html:
+    toc : true
+    code-line-numbers: true
+    code-link: true
+highlight-style: atom-one
+editor: visual
+---
+
+```{r setup, include=FALSE}
+#add all your packages here
+library(data.table)
+library(dplyr) #dplyr loads magrittr too
+```
+
+# 1. Data preparation
+
+When a new dataset is received, we need to start looking at it to understand what it contains. We have already seen a few approaches, and now we apply them to the `diab01.txt` dataset (in the data folder you downloaded from Learn).
+
+The outcome of interest in this dataset is `Y`, which represents a quantitative measure of diabetes status: the higher the score, the more severe is diabetes. The `fread()` function in the `data.table` package is similar to `read.table()` for delimited text files, but much faster at reading huge files.
+
+```{r}
+diab01.dt <- fread("data/diab01.txt", stringsAsFactors = F)
+dim(diab01.dt)
+head(diab01.dt)
+```
+
+We can see how different variables are coded by using the `str()` function. Calling `summary()` on the whole data table produces summary statistics for all variables.
+
+```{r}
+# store names of numeric columns for later
+diab01.dt %>% select_if(is.numeric) %>% summary 
+
+table(diab01.dt$SEX)
+```
+
+We can obtain a scatter plot of each variable against all others, but unless the number of variables is very small, it is not always very helpful.
+
+```{r}
+diab01.dt %>% 
+  select_if(is.numeric) %>% 
+  plot(cex = 0.2) # cex scales the size of the points
+```
+
+Let us plot the distributions of some of these variables.
+
+```{r}
+sbsplots <- function(varname, vars){
+  par(mfrow = c(1,2))
+  
+  hist(vars[,varname], 
+     main = paste0("Histogram of ", varname), 
+     xlab = varname)
+
+  boxplot(vars[,varname], 
+        main = paste0("Boxplot of ", varname),        
+        xlab = varname, 
+        ylab = "Value")  
+}
+
+numcols <- diab01.dt %>% 
+  select_if(is.numeric) %>% colnames
+sapply(numcols, sbsplots, vars = data.frame(diab01.dt))
+```
+
+The thick line in the centre of the box in the boxplots represents the median, and the extremes of the box correspond to the first and third quantiles (25th and 75th percentiles). The two whiskers by default extend to the most extreme data point within 1.5 times the interquartile range of the box. Any data point that exceeds that range appears as a point in the plot. These are possible outliers, but not necessarily so.
+
+Boxplots are a visual way of comparing the summary statistics for two subsets of data. This can be done by using a formula, that is an expression of the type: `variable ~ group`. For this to work well, we specify the name of the data table with the data argument, otherwise we would have to spell it out twice as `data01$HDL ~ data01$SEX`.
+
+```{r}
+boxplot(HDL ~ SEX, data = diab01.dt, 
+        main = "HDL stratified by sex")
+```
+
+A scatter plot could help in identifying the samples with extreme values. When producing the scatter plot of a single variable, points are plotted in the order they appear in the data table. This may be particularly revealing if the dataset originated from different cohorts (or different batches of measurements), as it may make visually obvious if there are cohort or batch effects in the data.
+
+```{r}
+plot(diab01.dt$LDL, main = "Scatter plot of LDL", ylab = "LDL")
+```
+
+Note that for plots to be most informative, we want them to be properly titled and have readable axis labels (R usually assigns some default ones, but they are not always as good as we had like). So spend a few seconds to add axis labels (options `xlab` and `ylab`) and title (option `main`) in all your plots.
+
+# 2. Merging datasets
+
+It is very common that medical data comes from different sources. Provided that all sources use the same identifiers, then those can be used to merge the datasets.
+
+```{r}
+diab02.dt <- fread("data/diab02.txt", stringsAsFactors = TRUE)
+str(diab02.dt)
+```
+
+First of all, note that the column of identifiers is called differently in the new dataset. Also, you will notice that patients are not listed in the order we had before: this is not a problem, as R can sort this out during the merge. Let us see what is the intersection between identifiers.
+
+```{r}
+length(intersect(diab01.dt$PAT, diab02.dt$ID))
+
+# new patients that are not in diab.dt
+diab02.dt[!ID %in% diab01.dt$PAT]$ID 
+
+# old patients that are not in diab02.dt
+diab01.dt[!PAT %in% diab02.dt$ID]$PAT 
+```
+
+So the `diab02.dt` dataset contains 2 patients that were not present in the `diab.dt` dataset, and 3 patients were in `diab01.dt` but not in `diab02.dt`. Clearly the patients that were in one dataset but not in the other will have missing values corresponding to the variables that they had not recorded.
+
+Let us merge the two datasets using the two columns of identifiers as a way of matching the observations. If we do not specify it, R will match observations from the two datasets using the set of columns that appear in both.
+
+In our case, as we know that the identifiers are held in variable `PAT` for `diab01` and variable `ID` for `diab02`, we indicate that explicitly with options `by.x` and `by.y`. By default R will create an inner join of the two dataset, that is it will keep only the observations that appear in both (the intersection of patients).
+
+```{r}
+diab.dt <- merge(diab01.dt, diab02.dt, by.x="PAT", by.y="ID")
+dim(diab.dt) # this corresponds to the intersection of patients
+```
+
+This may not be what we want: if so, we can specify to keep all observations from the first dataset (setting `all.x=TRUE`), or all observations from the second dataset (setting `all.y=TRUE`). For the moment, let us perform a merge so that all observations from both datasets are kept (an outer join): by setting `all=TRUE` we imply both `all.x=TRUE` and `all.y=TRUE`.
+
+```{r}
+diab.dt <- merge(diab01.dt, diab02.dt, 
+                 by.x = "PAT", by.y = "ID", all = TRUE)
+dim(diab.dt) # this corresponds to the union of patients
+colnames(diab.dt)
+
+#update numcols
+numcols <- c(numcols, "TCH", "LTG")
+```
+
+If in the datasets to be merged there are variables of the same name that are not used in matching observations (that is, they are not listed in the by option), both variables are kept in the merged data table, with `.x` and `.y` is appended to their name. To avoid this, you can rename variables using the list `.()` function to rename values before the merge.
+
+```{r}
+diab.alt.dt <- merge(diab01.dt, 
+                     diab02.dt[,.(PAT=ID, MY1=TCH, MY2=LTG)],
+                     by = "PAT", all = TRUE)
+dim(diab.dt) # this corresponds to the union of patients
+colnames(diab.dt)
+```
+
+### Exercise 2.1
+
+Using the builtin `state.x77` and `USArrests` datasets:
+
+-   Convert to data table format & use the command option to include the rowname as a column.
+-   Find the union and intersection of the column names of the two data tables.
+-   Merge the two data tables into a new one called `USdata.dt` and count the number of rows and columns of the resulting data table.
+-   Do a scatter plot of the two `Murder` variables and compute their correlation up to 3 significant digits.
+-   Add two new variables to `USdata.dt`: `MeanMurder` and `MaxMurder` to store the state-wise average and maximum of the two `Murder` variables.
+
+```{r}
+# Enter code here.
+```
+
+# 3. Missing values
+
+It's very common that datasets contain missing values. These are recorded in R as `NA`.
+
+```{r}
+head(diab.dt$TC, n = 30)
+```
+
+To count them, we can use the `is.na()` or the `summary()` function:
+
+```{r}
+diab.dt$TC %>% 
+  is.na() %>% table()
+diab.dt$TC %>% summary()
+```
+
+By default, R will not ignore the missing entries, which is a good thing, so we can become aware of them and decide explicitly how to deal with them. Fortunately, in most cases it is very easy to tell R to ignore the `NA`s in a speficic computation.
+
+```{r}
+# because of missing values, there is no overall mean
+mean(diab.dt$TC) 
+```
+
+```{r}
+# the mean is computed only on the observed values
+mean(diab.dt$TC, na.rm = TRUE) 
+```
+
+In other situations, however, it is not quite as easy. In such cases, we could discard all observation with any missing element using the `na.omit()` function.
+
+```{r}
+diab.dt.complete <- na.omit(diab.dt)
+
+dim(diab.dt.complete) # we lost one fifth of the dataset!
+```
+
+The other option is imputation. A very simple approach is to impute the missing values to the median value for that variable. Make a copy of the original data before you impute, or alternatively, create a separate column for the imputed value in order to retain the original.
+
+One of the ways `data.table` saves memory is by creating shallow copies i.e. pointers only unless explicitely told not to. To create a deep copy of the data table i.e. physically copy the data to a separate object, you must use the `copy()` function.
+
+```{r}
+# Take a deep copy of the original data in order to leave the original intact.
+diab.dt.imputed <- diab.dt %>% copy() %>% 
+                        .[, BMI:=ifelse(is.na(BMI), 
+                                        median(BMI, na.rm = T),
+                                        BMI)]
+```
+
+```{r}
+# Alternatively, create a new column for the imputed result.
+diab.dt[, BMI.imp:=ifelse(is.na(BMI), 
+                          median(BMI, na.rm=T), 
+                          BMI)]
+
+summary(diab.dt$BMI.imp)
+summary(diab.dt.imputed$BMI)
+summary(diab.dt.complete$BMI)
+```
+
+Remember that the validity of the inferences made on the complete dataset depends on the mechanisms of missingness (missing completely at random, missing at random, missing not at random). These mechanisms also influence the approaches we can use to impute missing values.
+
+To impute values for all missing values in numeric columns we can define a function.
+
+```{r}
+impute.to.median <- function(x) {
+                      # only apply to numeric/integer columns
+                      if (is.numeric(x) || is.integer(x)){
+                        # find which values are missing
+                        na.idx <- is.na(x)
+# replace NAs with the median computed over the observed values
+                        x[na.idx] <- median(x, na.rm = TRUE)
+                      }
+                      # return the vector with imputed values
+                      return(x)
+                    }
+```
+
+In theory we could now loop the function over the columns. However, loops in R are very inefficient and best avoided if possible. It is recommended instead to vectorise functions i.e. applying a function to a vector is equivalent to applying said function to each element of the vector. The `lapply()` function can be used to apply a function to each column of a data table.
+
+```{r}
+diab.dt.imputed2 <- diab.dt %>% copy() %>% 
+                        .[, (numcols) := lapply(.SD,                                          impute.to.median),.SDcols = numcols]
+summary(diab.dt$BMI.imp)
+summary(diab.dt.imputed$BMI)
+summary(diab.dt.imputed2$BMI)
+
+diab.dt.imputed2$BMI.imp <- NULL
+```
+
+### Exercise 3.1
+
+Using the built-in `airquality` data frame:
+
+-   Count the number of observed values per column and report the percentage of missing values per column.
+-   Make a copy of the data frame converting to data table.
+-   Impute the missing values to the mean. Only for columns with imputed values plot side by side histograms of raw (unimputed) and imputed columns.
+-   Write function `impute.to.monthly.mean(x, month)` (where month is a vector of the same length of x) that imputes missing values according to the mean value for each month, and repeat the imputation using this function.
+-   Report maximum absolute difference $\max_i |x_i−y_i|$ and mean absolute difference $P^n_{i=1}|x_i−y_i|/n$ between imputation to the mean and imputation to the monthly mean.
+-   For `Ozone` only, compare graphically the distributions of the unimputed data, the data imputed to the mean, and the data imputed to the monthly mean and justify the differences you see.
+
+```{r}
+# Enter code here.
+```
+
+# 4. Fitting linear regression models
+
+Let us start by analyzing two samples from a normal distribution. Since these are drawn independently from each other, we do not expect to see any pattern between the two.
+
+```{r}
+set.seed(1) # initialize the random number generator
+x <- rnorm(100, mean = 50, sd = 10)
+y <- rnorm(100, mean = 75, sd = 20)
+
+cor(x, y)
+```
+
+To fit a linear regression model using Ordinary Least Squares (OLS), we use `lm()`, see R documentation. In brief, we assume a linear relationship between a set of observed potentially explanatory data `X` and a variable of interest, for which we have some observed data `y`, i.e. $y = \mu + \beta*X +e$. Where $\mu$ is an intercept, $e$ is a set of residuals and $\beta$ a set of coefficients to be determined. Using OLS we choose values for $\beta$ which minimises the sum of the squared residuals $e$.
+
+The model is specified according to the formula interface, of the form `outcome ~ model`, where model consists of the names of the predictors (covariates) we want to include in the model separated by `+`. We do not need to specify an intercept term, as R adds it by default.
+
+```{r}
+regr <- lm(y ~ x) # linear regression of variables in the workspace
+regr$coefficients
+```
+
+We can add the regression line to an already open scatter plot by using the `abline()` function. The regression line (in black) coincides almost exactly with the horizontal line drawn at the intercept (in red): effectively, showing that `x` doesn't add any information to what we already knew about `y`.
+
+```{r}
+plot(x, y)
+abline(regr) # regression line
+abline(h = coef(regr)[1], col="red") # horizontal line at the intercept
+```
+
+We can extract more information about the fitting of this model by using the `summary()` function. An explanation of each of the terms is given in `?summary.lm`.
+
+```{r}
+summary(regr)
+```
+
+For now, we will concentrate on the table of hypothesis tests for the regression coefficients. We can limit our output to just that table if necessary.
+
+```{r}
+hyp.tests <- coef(summary(regr))
+hyp.tests
+```
+
+The Wald test statistic for the regression coefficients, reported in column labelled `t value`, can be computed manually as the ratio of regression coefficients to standard errors.
+
+```{r}
+tval <- hyp.tests[, "Estimate"] / hyp.tests[, "Std. Error"]
+tval
+```
+
+These values are compared to the quantiles of a $t$-distribution with $n−m−1$ degrees of freedom, where $m$ is the number of predictors in the model. For a significance of 0.05 we would require the 0.025 and 0.975 quantiles. Since the distribution is symmetric, these quantiles only differ by the sign. Therefore to compute a p-value it is enough to find the probability corresponding to the absolute value of the test statistic and double it (since we need to account for both tails).
+
+```{r}
+df <- length(y) - 1 - 1 # one predictor in the model
+qt(c(0.025, 0.975), df) # quantiles of a t distribution
+```
+
+```{r}
+2 * pt(abs(tval), df, lower.tail = FALSE) # p-values
+```
+
+In our model we can confidently reject the null hypothesis that the intercept term is zero, as its p-value is well below the standard significance threshold of 0.05. On the other hand, the same does not hold for `x`.
+
+## 4.1 Diabetes case study
+
+Let us start with a simple model in which we study the association between age and diabetes severity.
+
+```{r}
+regr.age <- lm(Y ~ AGE, data = diab.dt.imputed2) # specify the data table of covariates
+coef(summary(regr.age))
+```
+
+We could say that for any additional year of age, our diabetes score increases by 0.7 units. However, the standard error for age is high relative to its regression coefficient: this in turn does not allow us to reject the null hypothesis of no `age` effect, as the p-value (0.157) is above the conventional significance level of 0.05. We can come to the same conclusions by looking at the 95% confidence intervals for our coefficients: for `age`, 0 falls within the confidence intervals, so we do not have any support for rejecting the null hypothesis.
+
+```{r}
+confint(regr.age)
+```
+
+However, this may be an issue of power. Our current sample size is 102 which is rather small and may well be too small to allow us to make confident inferences for the effect sizes we are looking for. With a larger dataset our conclusions may be different.
+
+Let us now explore the relationship between diabetes severity and other predictors, for example `HDL` (high density lipoprotein, the so called **good cholesterol**). This time we will first check if there is any support for including HDL cholesterol in a regression model by looking at the correlation with the outcome of interest.
+
+```{r}
+with(diab.dt.imputed2, cor(Y, HDL))
+```
+
+We see a modest inverse relationship between the two variables, that is when `HDL` grows, the diabetes score decreases. We can confirm this with a linear regression model: again, given the presence of missing observations, R will perform the analysis of the complete dataset, the one that remains after all samples with missing values are removed.
+
+```{r}
+regr.hdl <- lm(Y ~ HDL, data = diab.dt.imputed2)
+summary(regr.hdl)
+```
+
+The negative sign for the `HDL` coefficient means that there is an inverse association between `HDL` and the outcome variable: given that `Y` is larger the worse the patient's diabetes status, then a negative coefficient can be interpreted as having a protective effect. An increase in HDL by one unit reduces the diabetes score by 1.57 units.
+
+Given that the p-value for `HDL` (0.00121) is below the significance threshold, we can say that `HDL` is significantly associated with the diabetes score. Notice that R adds a number of `*` according to the magnitude of the p-value.
+
+However, it may be argued that `HDL` depends on other factors, such as `age` and `sex`. By not taking into account these other risk factors, our conclusions may be misleading. Let uss add `age` and `sex` to the model with `HDL` and see what happens.
+
+```{r}
+regr <- lm(Y ~ AGE + SEX + HDL, data = diab.dt.imputed2)
+summary(regr)
+```
+
+We can claim that there is a significant association between `HDL` and our outcome variable even after adjusting for `age` and `sex`. Indeed, the effect size has increased: earlier we saw that one additional unit of `HDL` would decrease the diabetes score by 1.57, but after taking into account `age` and `sex`, the score would decrease by 2.2 units. Note that in this model, we can now claim that `age` has a non-zero effect on the diabetes score. This can be interpreted as follows: while `age` does not seem to be able to explain our outcome variable directly, it can explain the residuals produced by having `sex` and `HDL` in the model. It is customary to start looking at associations one variable at a time after adjusting for some known confounders (such as `age`, `sex`, `study cohort`, etc), that is variables that are known to affect the outcome or other predictors. Confounders are called like that because if they are ignored, they may change the conclusions of our investigation, sometimes in a drastic manner.
+
+## 4.2 Standardised coefficients
+
+What can we claim about the effect size of the variables in the model? Given that each variable has its own unit measure, it iss impossible to compare effect sizes directly. We need to scale variables in such a way that accounts for the spread of each variable. We accomplish this by dividing each continuous variable by its standard deviation, which produces standardised coefficients. Here we use of `:=` and `lapply()` which allows to modify the data table in place across column (lists).
+
+```{r}
+diab.dt.sd1 <- copy(diab.dt.imputed2)
+
+covar.cols <- colnames(diab.dt.sd1[, -c("PAT", "SEX", "Y")]) # Exclude non covariate columns
+
+diab.dt.sd1[, (covar.cols) := lapply(
+            .SD, function(x) x / sd(x)), 
+            .SDcols = covar.cols]
+
+summary(lm(Y ~ AGE + SEX + HDL, data = diab.dt.sd1))
+
+```
+
+This allows us to state that the effect of one standard deviation change in `HDL` is almost double than what produced by a change of one standard deviation in `age` (but in opposite directions). In real-life analyses we generally work with standardised variables, so that comparing effects sizes of different variables is straightforward. When producing a model for clinical use, we may instead want to report equations that are in the original units (unstandardised), as a clinician will not have access to standard deviations.
+
+## 4.3 Design matrix
+
+The design matrix is the matrix of all elements in the predictors and the intercept. To retrieve it, we can use function `model.matrix()` on a fitted regression object or on a model formula. When using a formula it is not necessary to specify the outcome variable, as this does not enter the design matrix.
+
+```{r}
+X <- model.matrix(~ AGE + SEX + HDL, data = diab.dt.imputed2) 
+# same as model.matrix(regr)
+```
+
+Have a look at `X` by entering `View(X)` in your console. As `SEX` is a categorical variable (with levels `F` and `M`), when it is used in the model, its levels are coded as dummy variables. Given a reference category (in this case, being female), we code all other categories by contrast: this means that we create a binary variable (R assigns the name `SEXM` to it) which codes for being male.
+
+```{r}
+head(diab.dt.imputed2[, c("AGE", "SEX")])
+```
+
+```{r}
+head(model.matrix(~ AGE + SEX, data=diab.dt.imputed2))
+```
+
+For a categorical variable with $k$ levels, the design matrix contains $k − 1$ dummy variables corresponding to all non-reference categories. For example, suppose we categorised patients by `age` in three strata:
+
+```{r}
+diab.dt.imputed2$AGE.CAT <- cut(diab.dt.imputed2$AGE, c(0, 40, 60, Inf))
+head(diab.dt.imputed2[, c("AGE", "AGE.CAT")])
+```
+
+```{r}
+head(model.matrix(~ AGE.CAT, data = diab.dt.imputed2)) 
+# reference level is (0,40]
+diab.dt.imputed2$AGE.CAT <- NULL 
+# remove the variable from the table
+```
+
+One of the most important outputs from a regression model is the vector of fitted values $\hat{y} = X \hat{\beta}$, where $X$ is our design matrix and $\hat{\beta}$ are the regression coefficients.
+
+```{r}
+regr <- lm(Y ~ AGE + SEX + HDL, data = diab.dt.imputed2)
+
+X <- model.matrix(regr) # design matrix
+beta.hat <- coef(regr) # regression coefficients
+y.hat <- X %*% beta.hat # matrix multiplication
+```
+
+We generally do not need to compute it explicitly, as it is already present in the regression object alongside other helpful quantities.
+
+```{r}
+# Observed data used to fit the model
+observed <- regr$model$Y
+
+# New values for our variable of interest estimated by fitting the model
+fits <- regr$fitted.values
+
+# Residuals i.e. difference between observed and estimated values
+res <- regr$residuals
+
+all.equal(res, observed - fits)
+```
+
+Now let us examine how much of the data the assumed linear relationship explains. We can examine this by looking at the $R^2$ value but first let us examine how it is estimated.
+
+```{r}
+num.predictors <- 3 # age, sex and hdl
+n <- length(res)
+
+# Residual standard error
+sqrt(sum(res^2) / (n - num.predictors - 1))
+
+# R-squared 
+r.squared <- 1 - sum(res^2) / sum((observed - mean(observed))^2)
+r.squared
+# Note that the numerator is the sum of the squared residuals i.e. the value we minimised with OLS, and the denominator simply scales it.
+
+# Adjusted R-squared
+ 1 - (1 - r.squared )*(n - 1) / (n - num.predictors - 1)
+ # It is essentially a standardized R-squared which penalises for the number of predictors.
+ 
+ summary(regr)
+```
+
+Looking at the $R^2$ value we can see that while `Age`, `Sex` and `HDL` are all significantly associated with diabetes they do not explain much of the observed variation. Furter investigation is therefore required.
+
+### Exercise 4.1
+
+Using the `diab.txt` dataset from Learn:
+
+-   Name the new data table `diab.new.dt` and fit a linear regression model for `Y` adjusted for `age`, `sex` and `total cholesterol (TC)`. Create a dataframe called `results.table` with a column for each of the **4 numbers**: regression coefficient and p-value for total cholesterol, $R^2$ and adjusted $R^2$ of the model and a rowname.
+-   Write a function which takes one predictor fits a linear model and appends a row of results to `results.table` in the same format as before with the name of the predictor in the rowname. Identify the predictor that produces the best performing model.
+-   Starting from the set of covariates used in the model with best performance determined above, write a function to fit all possible linear regression models that use one additional predictor. Produce a table of $R^2$ and adjusted $R^2$ of all models you fitted. Report the adjusted $R^2$ of the model of best fit. You may need to loop see R documentation for the function `for()`.
+
+```{r}
+# Enter code here.
+```
+
+### Exercise 4.2
+
+Using the `birthweight.txt` dataset from Learn:
+
+-   Explore the dataset and prepare it for the analysis (do not impute it).
+-   Summarise the distribution of birth weight for babies born to women who smoked during pregnancy and for babies born to women who did not. Report the percentage of babies born weighing under 2.5kg in the two strata of smoking status.
+-   Fit a linear regression model to establish if there is an association between birth weight and smoking and how much birth weight changes according to smoking.
+-   By how much is the average length of gestation different for first born children? Is the difference statistically significant? Is the mother's pre-pregnancy weight associated with length of gestation?
+-   Is birth weight associated with the mother's pre-pregnancy weight? Is the association independent of height of the mother?
+
+```{r}
+# Enter code here.
+```

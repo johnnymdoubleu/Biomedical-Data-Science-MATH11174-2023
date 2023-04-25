@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.2.269">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<meta name="author" content="Johnny MyungWon Lee (Modified from Debby Lipschutz &amp; Stuart McGurnaghan)">
+<meta name="dcterms.date" content="2023-01-27">
+<title>Lab 2: Data Preparation and Linear Regression</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<script src="Lab_2_Data_Preparation_and_Linear_Regression_files/libs/clipboard/clipboard.min.js"></script>
+<script src="Lab_2_Data_Preparation_and_Linear_Regression_files/libs/quarto-html/quarto.js"></script>
+<script src="Lab_2_Data_Preparation_and_Linear_Regression_files/libs/quarto-html/popper.min.js"></script>
+<script src="Lab_2_Data_Preparation_and_Linear_Regression_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="Lab_2_Data_Preparation_and_Linear_Regression_files/libs/quarto-html/anchor.min.js"></script>
+<link href="Lab_2_Data_Preparation_and_Linear_Regression_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="Lab_2_Data_Preparation_and_Linear_Regression_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="Lab_2_Data_Preparation_and_Linear_Regression_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="Lab_2_Data_Preparation_and_Linear_Regression_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="Lab_2_Data_Preparation_and_Linear_Regression_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light"><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+</head>
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active"><h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+<li><a href="#data-preparation" id="toc-data-preparation" class="nav-link active" data-scroll-target="#data-preparation">1. Data preparation</a></li>
+  <li>
+<a href="#merging-datasets" id="toc-merging-datasets" class="nav-link" data-scroll-target="#merging-datasets">2. Merging datasets</a>
+  <ul class="collapse">
+<li><a href="#exercise-2.1" id="toc-exercise-2.1" class="nav-link" data-scroll-target="#exercise-2.1">Exercise 2.1</a></li>
+  </ul>
+</li>
+  <li>
+<a href="#missing-values" id="toc-missing-values" class="nav-link" data-scroll-target="#missing-values">3. Missing values</a>
+  <ul class="collapse">
+<li><a href="#exercise-3.1" id="toc-exercise-3.1" class="nav-link" data-scroll-target="#exercise-3.1">Exercise 3.1</a></li>
+  </ul>
+</li>
+  <li>
+<a href="#fitting-linear-regression-models" id="toc-fitting-linear-regression-models" class="nav-link" data-scroll-target="#fitting-linear-regression-models">4. Fitting linear regression models</a>
+  <ul class="collapse">
+<li><a href="#diabetes-case-study" id="toc-diabetes-case-study" class="nav-link" data-scroll-target="#diabetes-case-study">4.1 Diabetes case study</a></li>
+  <li><a href="#standardised-coefficients" id="toc-standardised-coefficients" class="nav-link" data-scroll-target="#standardised-coefficients">4.2 Standardised coefficients</a></li>
+  <li>
+<a href="#design-matrix" id="toc-design-matrix" class="nav-link" data-scroll-target="#design-matrix">4.3 Design matrix</a>
+  <ul class="collapse">
+<li><a href="#exercise-4.1" id="toc-exercise-4.1" class="nav-link" data-scroll-target="#exercise-4.1">Exercise 4.1</a></li>
+  <li><a href="#exercise-4.2" id="toc-exercise-4.2" class="nav-link" data-scroll-target="#exercise-4.2">Exercise 4.2</a></li>
+  </ul>
+</li>
+  </ul>
+</li>
+  </ul></nav>
+</div>
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block default"><div class="quarto-title">
+<h1 class="title">Lab 2: Data Preparation and Linear Regression</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Johnny MyungWon Lee (Modified from Debby Lipschutz &amp; Stuart McGurnaghan) </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">January 27, 2023</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header><section id="data-preparation" class="level1"><h1>1. Data preparation</h1>
+<p>When a new dataset is received, we need to start looking at it to understand what it contains. We have already seen a few approaches, and now we apply them to the <code>diab01.txt</code> dataset (in the data folder you downloaded from Learn).</p>
+<p>The outcome of interest in this dataset is <code>Y</code>, which represents a quantitative measure of diabetes status: the higher the score, the more severe is diabetes. The <code>fread()</code> function in the <code>data.table</code> package is similar to <code><a href="https://rdrr.io/r/utils/read.table.html">read.table()</a></code> for delimited text files, but much faster at reading huge files.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a>diab01.dt <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="st">"data/diab01.txt"</span>, <span class="at">stringsAsFactors =</span> F)</span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="fu">dim</span>(diab01.dt)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 100  10</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="fu">head</span>(diab01.dt)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      PAT AGE SEX  BMI  BP  TC   LDL HDL GLU   Y
+1: pat001  59   F 32.1 101 157  93.2  38  87 151
+2: pat002  48   M 21.6  87 183 103.2  70  69  75
+3: pat003  72   F 30.5  93 156  93.6  41  85 141
+4: pat004  24   M 25.3  84 198 131.4  40  89 206
+5: pat005  50   M 23.0 101 192 125.4  52  80 135
+6: pat006  23   M 22.6  89 139  64.8  61  68  97</code></pre>
+</div>
+</div>
+<p>We can see how different variables are coded by using the <code><a href="https://rdrr.io/r/utils/str.html">str()</a></code> function. Calling <code><a href="https://rdrr.io/r/base/summary.html">summary()</a></code> on the whole data table produces summary statistics for all variables.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="co"># store names of numeric columns for later</span></span>
+<span id="cb5-2"><a href="#cb5-2"></a>diab01.dt <span class="sc">%&gt;%</span> <span class="fu">select_if</span>(is.numeric) <span class="sc">%&gt;%</span> summary </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      AGE             BMI              BP               TC           LDL       
+ Min.   :19.00   Min.   :18.60   Min.   : 63.00   Min.   : 97   Min.   : 47.2  
+ 1st Qu.:35.00   1st Qu.:22.75   1st Qu.: 83.00   1st Qu.:158   1st Qu.: 91.8  
+ Median :47.50   Median :24.85   Median : 89.50   Median :181   Median :106.6  
+ Mean   :45.82   Mean   :25.35   Mean   : 91.56   Mean   :181   Mean   :109.0  
+ 3rd Qu.:58.00   3rd Qu.:27.48   3rd Qu.: 98.00   3rd Qu.:198   3rd Qu.:125.4  
+ Max.   :72.00   Max.   :38.00   Max.   :131.00   Max.   :264   Max.   :284.2  
+                 NA's   :2       NA's   :2        NA's   :7     NA's   :3      
+      HDL            GLU              Y        
+ Min.   :22.0   Min.   : 60.0   Min.   : 37.0  
+ 1st Qu.:43.0   1st Qu.: 81.0   1st Qu.: 75.0  
+ Median :50.5   Median : 88.0   Median :128.5  
+ Mean   :52.5   Mean   : 88.1   Mean   :133.6  
+ 3rd Qu.:62.0   3rd Qu.: 94.0   3rd Qu.:170.0  
+ Max.   :99.0   Max.   :124.0   Max.   :341.0  
+ NA's   :2      NA's   :7                      </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="fu">table</span>(diab01.dt<span class="sc">$</span>SEX)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+ F  M 
+42 58 </code></pre>
+</div>
+</div>
+<p>We can obtain a scatter plot of each variable against all others, but unless the number of variables is very small, it is not always very helpful.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a>diab01.dt <span class="sc">%&gt;%</span> </span>
+<span id="cb9-2"><a href="#cb9-2"></a>  <span class="fu">select_if</span>(is.numeric) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-3"><a href="#cb9-3"></a>  <span class="fu">plot</span>(<span class="at">cex =</span> <span class="fl">0.2</span>) <span class="co"># cex scales the size of the points</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Lab_2_Data_Preparation_and_Linear_Regression_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Let us plot the distributions of some of these variables.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a>sbsplots <span class="ot">&lt;-</span> <span class="cf">function</span>(varname, vars){</span>
+<span id="cb10-2"><a href="#cb10-2"></a>  <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>))</span>
+<span id="cb10-3"><a href="#cb10-3"></a>  </span>
+<span id="cb10-4"><a href="#cb10-4"></a>  <span class="fu">hist</span>(vars[,varname], </span>
+<span id="cb10-5"><a href="#cb10-5"></a>     <span class="at">main =</span> <span class="fu">paste0</span>(<span class="st">"Histogram of "</span>, varname), </span>
+<span id="cb10-6"><a href="#cb10-6"></a>     <span class="at">xlab =</span> varname)</span>
+<span id="cb10-7"><a href="#cb10-7"></a></span>
+<span id="cb10-8"><a href="#cb10-8"></a>  <span class="fu">boxplot</span>(vars[,varname], </span>
+<span id="cb10-9"><a href="#cb10-9"></a>        <span class="at">main =</span> <span class="fu">paste0</span>(<span class="st">"Boxplot of "</span>, varname),        </span>
+<span id="cb10-10"><a href="#cb10-10"></a>        <span class="at">xlab =</span> varname, </span>
+<span id="cb10-11"><a href="#cb10-11"></a>        <span class="at">ylab =</span> <span class="st">"Value"</span>)  </span>
+<span id="cb10-12"><a href="#cb10-12"></a>}</span>
+<span id="cb10-13"><a href="#cb10-13"></a></span>
+<span id="cb10-14"><a href="#cb10-14"></a>numcols <span class="ot">&lt;-</span> diab01.dt <span class="sc">%&gt;%</span> </span>
+<span id="cb10-15"><a href="#cb10-15"></a>  <span class="fu">select_if</span>(is.numeric) <span class="sc">%&gt;%</span> colnames</span>
+<span id="cb10-16"><a href="#cb10-16"></a><span class="fu">sapply</span>(numcols, sbsplots, <span class="at">vars =</span> <span class="fu">data.frame</span>(diab01.dt))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Lab_2_Data_Preparation_and_Linear_Regression_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="Lab_2_Data_Preparation_and_Linear_Regression_files/figure-html/unnamed-chunk-4-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="Lab_2_Data_Preparation_and_Linear_Regression_files/figure-html/unnamed-chunk-4-3.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="Lab_2_Data_Preparation_and_Linear_Regression_files/figure-html/unnamed-chunk-4-4.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="Lab_2_Data_Preparation_and_Linear_Regression_files/figure-html/unnamed-chunk-4-5.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="Lab_2_Data_Preparation_and_Linear_Regression_files/figure-html/unnamed-chunk-4-6.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="Lab_2_Data_Preparation_and_Linear_Regression_files/figure-html/unnamed-chunk-4-7.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="Lab_2_Data_Preparation_and_Linear_Regression_files/figure-html/unnamed-chunk-4-8.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      AGE       BMI       BP        TC        LDL       HDL       GLU      
+stats numeric,5 numeric,5 numeric,5 numeric,5 numeric,5 numeric,5 numeric,5
+n     100       98        98        93        97        98        93       
+conf  numeric,2 numeric,2 numeric,2 numeric,2 numeric,2 numeric,2 numeric,2
+out   numeric,0 38        numeric,3 numeric,2 numeric,2 99        numeric,3
+group numeric,0 1         numeric,3 numeric,2 numeric,2 1         numeric,3
+names ""        ""        ""        ""        ""        ""        ""       
+      Y        
+stats numeric,5
+n     100      
+conf  numeric,2
+out   341      
+group 1        
+names ""       </code></pre>
+</div>
+</div>
+<p>The thick line in the centre of the box in the boxplots represents the median, and the extremes of the box correspond to the first and third quantiles (25th and 75th percentiles). The two whiskers by default extend to the most extreme data point within 1.5 times the interquartile range of the box. Any data point that exceeds that range appears as a point in the plot. These are possible outliers, but not necessarily so.</p>
+<p>Boxplots are a visual way of comparing the summary statistics for two subsets of data. This can be done by using a formula, that is an expression of the type: <code>variable ~ group</code>. For this to work well, we specify the name of the data table with the data argument, otherwise we would have to spell it out twice as <code>data01$HDL ~ data01$SEX</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a><span class="fu">boxplot</span>(HDL <span class="sc">~</span> SEX, <span class="at">data =</span> diab01.dt, </span>
+<span id="cb12-2"><a href="#cb12-2"></a>        <span class="at">main =</span> <span class="st">"HDL stratified by sex"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Lab_2_Data_Preparation_and_Linear_Regression_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>A scatter plot could help in identifying the samples with extreme values. When producing the scatter plot of a single variable, points are plotted in the order they appear in the data table. This may be particularly revealing if the dataset originated from different cohorts (or different batches of measurements), as it may make visually obvious if there are cohort or batch effects in the data.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a><span class="fu">plot</span>(diab01.dt<span class="sc">$</span>LDL, <span class="at">main =</span> <span class="st">"Scatter plot of LDL"</span>, <span class="at">ylab =</span> <span class="st">"LDL"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Lab_2_Data_Preparation_and_Linear_Regression_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Note that for plots to be most informative, we want them to be properly titled and have readable axis labels (R usually assigns some default ones, but they are not always as good as we had like). So spend a few seconds to add axis labels (options <code>xlab</code> and <code>ylab</code>) and title (option <code>main</code>) in all your plots.</p>
+</section><section id="merging-datasets" class="level1"><h1>2. Merging datasets</h1>
+<p>It is very common that medical data comes from different sources. Provided that all sources use the same identifiers, then those can be used to merge the datasets.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1"></a>diab02.dt <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="st">"data/diab02.txt"</span>, <span class="at">stringsAsFactors =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb14-2"><a href="#cb14-2"></a><span class="fu">str</span>(diab02.dt)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Classes 'data.table' and 'data.frame':  99 obs. of  3 variables:
+ $ ID : Factor w/ 99 levels "pat001","pat003",..: 10 4 35 31 15 58 36 87 59 28 ...
+ $ TCH: num  6 4 3 2 5 2 6 3 6 3 ...
+ $ LTG: num  3.58 4.29 4.83 4.44 4.94 ...
+ - attr(*, ".internal.selfref")=&lt;externalptr&gt; </code></pre>
+</div>
+</div>
+<p>First of all, note that the column of identifiers is called differently in the new dataset. Also, you will notice that patients are not listed in the order we had before: this is not a problem, as R can sort this out during the merge. Let us see what is the intersection between identifiers.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1"></a><span class="fu">length</span>(<span class="fu">intersect</span>(diab01.dt<span class="sc">$</span>PAT, diab02.dt<span class="sc">$</span>ID))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 97</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1"></a><span class="co"># new patients that are not in diab.dt</span></span>
+<span id="cb18-2"><a href="#cb18-2"></a>diab02.dt[<span class="sc">!</span>ID <span class="sc">%in%</span> diab01.dt<span class="sc">$</span>PAT]<span class="sc">$</span>ID </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] pat101 pat102
+99 Levels: pat001 pat003 pat004 pat005 pat006 pat007 pat008 pat010 ... pat102</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1"></a><span class="co"># old patients that are not in diab02.dt</span></span>
+<span id="cb20-2"><a href="#cb20-2"></a>diab01.dt[<span class="sc">!</span>PAT <span class="sc">%in%</span> diab02.dt<span class="sc">$</span>ID]<span class="sc">$</span>PAT </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "pat002" "pat009" "pat013"</code></pre>
+</div>
+</div>
+<p>So the <code>diab02.dt</code> dataset contains 2 patients that were not present in the <code>diab.dt</code> dataset, and 3 patients were in <code>diab01.dt</code> but not in <code>diab02.dt</code>. Clearly the patients that were in one dataset but not in the other will have missing values corresponding to the variables that they had not recorded.</p>
+<p>Let us merge the two datasets using the two columns of identifiers as a way of matching the observations. If we do not specify it, R will match observations from the two datasets using the set of columns that appear in both.</p>
+<p>In our case, as we know that the identifiers are held in variable <code>PAT</code> for <code>diab01</code> and variable <code>ID</code> for <code>diab02</code>, we indicate that explicitly with options <code>by.x</code> and <code>by.y</code>. By default R will create an inner join of the two dataset, that is it will keep only the observations that appear in both (the intersection of patients).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1"></a>diab.dt <span class="ot">&lt;-</span> <span class="fu">merge</span>(diab01.dt, diab02.dt, <span class="at">by.x=</span><span class="st">"PAT"</span>, <span class="at">by.y=</span><span class="st">"ID"</span>)</span>
+<span id="cb22-2"><a href="#cb22-2"></a><span class="fu">dim</span>(diab.dt) <span class="co"># this corresponds to the intersection of patients</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 97 12</code></pre>
+</div>
+</div>
+<p>This may not be what we want: if so, we can specify to keep all observations from the first dataset (setting <code>all.x=TRUE</code>), or all observations from the second dataset (setting <code>all.y=TRUE</code>). For the moment, let us perform a merge so that all observations from both datasets are kept (an outer join): by setting <code>all=TRUE</code> we imply both <code>all.x=TRUE</code> and <code>all.y=TRUE</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1"></a>diab.dt <span class="ot">&lt;-</span> <span class="fu">merge</span>(diab01.dt, diab02.dt, </span>
+<span id="cb24-2"><a href="#cb24-2"></a>                 <span class="at">by.x =</span> <span class="st">"PAT"</span>, <span class="at">by.y =</span> <span class="st">"ID"</span>, <span class="at">all =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb24-3"><a href="#cb24-3"></a><span class="fu">dim</span>(diab.dt) <span class="co"># this corresponds to the union of patients</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 102  12</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1"></a><span class="fu">colnames</span>(diab.dt)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "PAT" "AGE" "SEX" "BMI" "BP"  "TC"  "LDL" "HDL" "GLU" "Y"   "TCH" "LTG"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1"></a><span class="co">#update numcols</span></span>
+<span id="cb28-2"><a href="#cb28-2"></a>numcols <span class="ot">&lt;-</span> <span class="fu">c</span>(numcols, <span class="st">"TCH"</span>, <span class="st">"LTG"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>If in the datasets to be merged there are variables of the same name that are not used in matching observations (that is, they are not listed in the by option), both variables are kept in the merged data table, with <code>.x</code> and <code>.y</code> is appended to their name. To avoid this, you can rename variables using the list <code>.()</code> function to rename values before the merge.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1"></a>diab.alt.dt <span class="ot">&lt;-</span> <span class="fu">merge</span>(diab01.dt, </span>
+<span id="cb29-2"><a href="#cb29-2"></a>                     diab02.dt[,.(<span class="at">PAT=</span>ID, <span class="at">MY1=</span>TCH, <span class="at">MY2=</span>LTG)],</span>
+<span id="cb29-3"><a href="#cb29-3"></a>                     <span class="at">by =</span> <span class="st">"PAT"</span>, <span class="at">all =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb29-4"><a href="#cb29-4"></a><span class="fu">dim</span>(diab.dt) <span class="co"># this corresponds to the union of patients</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 102  12</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1"></a><span class="fu">colnames</span>(diab.dt)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "PAT" "AGE" "SEX" "BMI" "BP"  "TC"  "LDL" "HDL" "GLU" "Y"   "TCH" "LTG"</code></pre>
+</div>
+</div>
+<section id="exercise-2.1" class="level3"><h3 class="anchored" data-anchor-id="exercise-2.1">Exercise 2.1</h3>
+<p>Using the builtin <code>state.x77</code> and <code>USArrests</code> datasets:</p>
+<ul>
+<li>Convert to data table format &amp; use the command option to include the rowname as a column.</li>
+<li>Find the union and intersection of the column names of the two data tables.</li>
+<li>Merge the two data tables into a new one called <code>USdata.dt</code> and count the number of rows and columns of the resulting data table.</li>
+<li>Do a scatter plot of the two <code>Murder</code> variables and compute their correlation up to 3 significant digits.</li>
+<li>Add two new variables to <code>USdata.dt</code>: <code>MeanMurder</code> and <code>MaxMurder</code> to store the state-wise average and maximum of the two <code>Murder</code> variables.</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1"></a><span class="co"># Enter code here.</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section></section><section id="missing-values" class="level1"><h1>3. Missing values</h1>
+<p>It’s very common that datasets contain missing values. These are recorded in R as <code>NA</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1"></a><span class="fu">head</span>(diab.dt<span class="sc">$</span>TC, <span class="at">n =</span> <span class="dv">30</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] 157 183 156 198 192 139 160 255 179 180 114  NA 186 186 202 254 207 214 162
+[20] 187 156 162 187 210  NA 178 124 158 160 158</code></pre>
+</div>
+</div>
+<p>To count them, we can use the <code><a href="https://rdrr.io/r/base/NA.html">is.na()</a></code> or the <code><a href="https://rdrr.io/r/base/summary.html">summary()</a></code> function:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1"></a>diab.dt<span class="sc">$</span>TC <span class="sc">%&gt;%</span> </span>
+<span id="cb36-2"><a href="#cb36-2"></a>  <span class="fu">is.na</span>() <span class="sc">%&gt;%</span> <span class="fu">table</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>.
+FALSE  TRUE 
+   93     9 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1"></a>diab.dt<span class="sc">$</span>TC <span class="sc">%&gt;%</span> <span class="fu">summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
+     97     158     181     181     198     264       9 </code></pre>
+</div>
+</div>
+<p>By default, R will not ignore the missing entries, which is a good thing, so we can become aware of them and decide explicitly how to deal with them. Fortunately, in most cases it is very easy to tell R to ignore the <code>NA</code>s in a speficic computation.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1"></a><span class="co"># because of missing values, there is no overall mean</span></span>
+<span id="cb40-2"><a href="#cb40-2"></a><span class="fu">mean</span>(diab.dt<span class="sc">$</span>TC) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] NA</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1"></a><span class="co"># the mean is computed only on the observed values</span></span>
+<span id="cb42-2"><a href="#cb42-2"></a><span class="fu">mean</span>(diab.dt<span class="sc">$</span>TC, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 181.0108</code></pre>
+</div>
+</div>
+<p>In other situations, however, it is not quite as easy. In such cases, we could discard all observation with any missing element using the <code><a href="https://rdrr.io/r/stats/na.fail.html">na.omit()</a></code> function.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1"></a>diab.dt.complete <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(diab.dt)</span>
+<span id="cb44-2"><a href="#cb44-2"></a></span>
+<span id="cb44-3"><a href="#cb44-3"></a><span class="fu">dim</span>(diab.dt.complete) <span class="co"># we lost one fifth of the dataset!</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 72 12</code></pre>
+</div>
+</div>
+<p>The other option is imputation. A very simple approach is to impute the missing values to the median value for that variable. Make a copy of the original data before you impute, or alternatively, create a separate column for the imputed value in order to retain the original.</p>
+<p>One of the ways <code>data.table</code> saves memory is by creating shallow copies i.e.&nbsp;pointers only unless explicitely told not to. To create a deep copy of the data table i.e.&nbsp;physically copy the data to a separate object, you must use the <code>copy()</code> function.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1"></a><span class="co"># Take a deep copy of the original data in order to leave the original intact.</span></span>
+<span id="cb46-2"><a href="#cb46-2"></a>diab.dt.imputed <span class="ot">&lt;-</span> diab.dt <span class="sc">%&gt;%</span> <span class="fu">copy</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb46-3"><a href="#cb46-3"></a>                        .[, BMI<span class="sc">:</span><span class="er">=</span><span class="fu">ifelse</span>(<span class="fu">is.na</span>(BMI), </span>
+<span id="cb46-4"><a href="#cb46-4"></a>                                        <span class="fu">median</span>(BMI, <span class="at">na.rm =</span> T),</span>
+<span id="cb46-5"><a href="#cb46-5"></a>                                        BMI)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1"></a><span class="co"># Alternatively, create a new column for the imputed result.</span></span>
+<span id="cb47-2"><a href="#cb47-2"></a>diab.dt[, BMI.imp<span class="sc">:</span><span class="er">=</span><span class="fu">ifelse</span>(<span class="fu">is.na</span>(BMI), </span>
+<span id="cb47-3"><a href="#cb47-3"></a>                          <span class="fu">median</span>(BMI, <span class="at">na.rm=</span>T), </span>
+<span id="cb47-4"><a href="#cb47-4"></a>                          BMI)]</span>
+<span id="cb47-5"><a href="#cb47-5"></a></span>
+<span id="cb47-6"><a href="#cb47-6"></a><span class="fu">summary</span>(diab.dt<span class="sc">$</span>BMI.imp)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  18.60   22.90   24.85   25.33   27.38   38.00 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1"></a><span class="fu">summary</span>(diab.dt.imputed<span class="sc">$</span>BMI)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  18.60   22.90   24.85   25.33   27.38   38.00 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1"></a><span class="fu">summary</span>(diab.dt.complete<span class="sc">$</span>BMI)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  18.60   22.68   25.25   25.43   27.50   38.00 </code></pre>
+</div>
+</div>
+<p>Remember that the validity of the inferences made on the complete dataset depends on the mechanisms of missingness (missing completely at random, missing at random, missing not at random). These mechanisms also influence the approaches we can use to impute missing values.</p>
+<p>To impute values for all missing values in numeric columns we can define a function.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1"></a>impute.to.median <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb53-2"><a href="#cb53-2"></a>                      <span class="co"># only apply to numeric/integer columns</span></span>
+<span id="cb53-3"><a href="#cb53-3"></a>                      <span class="cf">if</span> (<span class="fu">is.numeric</span>(x) <span class="sc">||</span> <span class="fu">is.integer</span>(x)){</span>
+<span id="cb53-4"><a href="#cb53-4"></a>                        <span class="co"># find which values are missing</span></span>
+<span id="cb53-5"><a href="#cb53-5"></a>                        na.idx <span class="ot">&lt;-</span> <span class="fu">is.na</span>(x)</span>
+<span id="cb53-6"><a href="#cb53-6"></a><span class="co"># replace NAs with the median computed over the observed values</span></span>
+<span id="cb53-7"><a href="#cb53-7"></a>                        x[na.idx] <span class="ot">&lt;-</span> <span class="fu">median</span>(x, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb53-8"><a href="#cb53-8"></a>                      }</span>
+<span id="cb53-9"><a href="#cb53-9"></a>                      <span class="co"># return the vector with imputed values</span></span>
+<span id="cb53-10"><a href="#cb53-10"></a>                      <span class="fu">return</span>(x)</span>
+<span id="cb53-11"><a href="#cb53-11"></a>                    }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>In theory we could now loop the function over the columns. However, loops in R are very inefficient and best avoided if possible. It is recommended instead to vectorise functions i.e.&nbsp;applying a function to a vector is equivalent to applying said function to each element of the vector. The <code><a href="https://rdrr.io/r/base/lapply.html">lapply()</a></code> function can be used to apply a function to each column of a data table.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1"></a>diab.dt.imputed2 <span class="ot">&lt;-</span> diab.dt <span class="sc">%&gt;%</span> <span class="fu">copy</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb54-2"><a href="#cb54-2"></a>                        .[, (numcols) <span class="sc">:</span><span class="er">=</span> <span class="fu">lapply</span>(.SD,                                          impute.to.median),.SDcols <span class="ot">=</span> numcols]</span>
+<span id="cb54-3"><a href="#cb54-3"></a><span class="fu">summary</span>(diab.dt<span class="sc">$</span>BMI.imp)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  18.60   22.90   24.85   25.33   27.38   38.00 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1"></a><span class="fu">summary</span>(diab.dt.imputed<span class="sc">$</span>BMI)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  18.60   22.90   24.85   25.33   27.38   38.00 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1"></a><span class="fu">summary</span>(diab.dt.imputed2<span class="sc">$</span>BMI)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  18.60   22.90   24.85   25.33   27.38   38.00 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1"></a>diab.dt.imputed2<span class="sc">$</span>BMI.imp <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="exercise-3.1" class="level3"><h3 class="anchored" data-anchor-id="exercise-3.1">Exercise 3.1</h3>
+<p>Using the built-in <code>airquality</code> data frame:</p>
+<ul>
+<li>Count the number of observed values per column and report the percentage of missing values per column.</li>
+<li>Make a copy of the data frame converting to data table.</li>
+<li>Impute the missing values to the mean. Only for columns with imputed values plot side by side histograms of raw (unimputed) and imputed columns.</li>
+<li>Write function <code>impute.to.monthly.mean(x, month)</code> (where month is a vector of the same length of x) that imputes missing values according to the mean value for each month, and repeat the imputation using this function.</li>
+<li>Report maximum absolute difference <span class="math inline">\(\max_i |x_i−y_i|\)</span> and mean absolute difference <span class="math inline">\(P^n_{i=1}|x_i−y_i|/n\)</span> between imputation to the mean and imputation to the monthly mean.</li>
+<li>For <code>Ozone</code> only, compare graphically the distributions of the unimputed data, the data imputed to the mean, and the data imputed to the monthly mean and justify the differences you see.</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb61"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1"></a><span class="co"># Enter code here.</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section></section><section id="fitting-linear-regression-models" class="level1"><h1>4. Fitting linear regression models</h1>
+<p>Let us start by analyzing two samples from a normal distribution. Since these are drawn independently from each other, we do not expect to see any pattern between the two.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>) <span class="co"># initialize the random number generator</span></span>
+<span id="cb62-2"><a href="#cb62-2"></a>x <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">100</span>, <span class="at">mean =</span> <span class="dv">50</span>, <span class="at">sd =</span> <span class="dv">10</span>)</span>
+<span id="cb62-3"><a href="#cb62-3"></a>y <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">100</span>, <span class="at">mean =</span> <span class="dv">75</span>, <span class="at">sd =</span> <span class="dv">20</span>)</span>
+<span id="cb62-4"><a href="#cb62-4"></a></span>
+<span id="cb62-5"><a href="#cb62-5"></a><span class="fu">cor</span>(x, y)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -0.0009943199</code></pre>
+</div>
+</div>
+<p>To fit a linear regression model using Ordinary Least Squares (OLS), we use <code><a href="https://rdrr.io/r/stats/lm.html">lm()</a></code>, see R documentation. In brief, we assume a linear relationship between a set of observed potentially explanatory data <code>X</code> and a variable of interest, for which we have some observed data <code>y</code>, i.e.&nbsp;<span class="math inline">\(y = \mu + \beta*X +e\)</span>. Where <span class="math inline">\(\mu\)</span> is an intercept, <span class="math inline">\(e\)</span> is a set of residuals and <span class="math inline">\(\beta\)</span> a set of coefficients to be determined. Using OLS we choose values for <span class="math inline">\(\beta\)</span> which minimises the sum of the squared residuals <span class="math inline">\(e\)</span>.</p>
+<p>The model is specified according to the formula interface, of the form <code>outcome ~ model</code>, where model consists of the names of the predictors (covariates) we want to include in the model separated by <code>+</code>. We do not need to specify an intercept term, as R adds it by default.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1"></a>regr <span class="ot">&lt;-</span> <span class="fu">lm</span>(y <span class="sc">~</span> x) <span class="co"># linear regression of variables in the workspace</span></span>
+<span id="cb64-2"><a href="#cb64-2"></a>regr<span class="sc">$</span>coefficients</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> (Intercept)            x 
+74.352186339 -0.002120772 </code></pre>
+</div>
+</div>
+<p>We can add the regression line to an already open scatter plot by using the <code><a href="https://rdrr.io/r/graphics/abline.html">abline()</a></code> function. The regression line (in black) coincides almost exactly with the horizontal line drawn at the intercept (in red): effectively, showing that <code>x</code> doesn’t add any information to what we already knew about <code>y</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1"></a><span class="fu">plot</span>(x, y)</span>
+<span id="cb66-2"><a href="#cb66-2"></a><span class="fu">abline</span>(regr) <span class="co"># regression line</span></span>
+<span id="cb66-3"><a href="#cb66-3"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="fu">coef</span>(regr)[<span class="dv">1</span>], <span class="at">col=</span><span class="st">"red"</span>) <span class="co"># horizontal line at the intercept</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Lab_2_Data_Preparation_and_Linear_Regression_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>We can extract more information about the fitting of this model by using the <code><a href="https://rdrr.io/r/base/summary.html">summary()</a></code> function. An explanation of each of the terms is given in <code><a href="https://rdrr.io/r/stats/summary.lm.html">?summary.lm</a></code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb67"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1"></a><span class="fu">summary</span>(regr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = y ~ x)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-37.54 -12.28  -2.79  10.79  46.92 
+
+Coefficients:
+             Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept) 74.352186  11.174451   6.654 1.65e-09 ***
+x           -0.002121   0.215454  -0.010    0.992    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 19.26 on 98 degrees of freedom
+Multiple R-squared:  9.887e-07, Adjusted R-squared:  -0.0102 
+F-statistic: 9.689e-05 on 1 and 98 DF,  p-value: 0.9922</code></pre>
+</div>
+</div>
+<p>For now, we will concentrate on the table of hypothesis tests for the regression coefficients. We can limit our output to just that table if necessary.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1"></a>hyp.tests <span class="ot">&lt;-</span> <span class="fu">coef</span>(<span class="fu">summary</span>(regr))</span>
+<span id="cb69-2"><a href="#cb69-2"></a>hyp.tests</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                Estimate Std. Error      t value     Pr(&gt;|t|)
+(Intercept) 74.352186339 11.1744506  6.653766602 1.647043e-09
+x           -0.002120772  0.2154541 -0.009843269 9.921663e-01</code></pre>
+</div>
+</div>
+<p>The Wald test statistic for the regression coefficients, reported in column labelled <code>t value</code>, can be computed manually as the ratio of regression coefficients to standard errors.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1"></a>tval <span class="ot">&lt;-</span> hyp.tests[, <span class="st">"Estimate"</span>] <span class="sc">/</span> hyp.tests[, <span class="st">"Std. Error"</span>]</span>
+<span id="cb71-2"><a href="#cb71-2"></a>tval</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> (Intercept)            x 
+ 6.653766602 -0.009843269 </code></pre>
+</div>
+</div>
+<p>These values are compared to the quantiles of a <span class="math inline">\(t\)</span>-distribution with <span class="math inline">\(n−m−1\)</span> degrees of freedom, where <span class="math inline">\(m\)</span> is the number of predictors in the model. For a significance of 0.05 we would require the 0.025 and 0.975 quantiles. Since the distribution is symmetric, these quantiles only differ by the sign. Therefore to compute a p-value it is enough to find the probability corresponding to the absolute value of the test statistic and double it (since we need to account for both tails).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1"></a>df <span class="ot">&lt;-</span> <span class="fu">length</span>(y) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">-</span> <span class="dv">1</span> <span class="co"># one predictor in the model</span></span>
+<span id="cb73-2"><a href="#cb73-2"></a><span class="fu">qt</span>(<span class="fu">c</span>(<span class="fl">0.025</span>, <span class="fl">0.975</span>), df) <span class="co"># quantiles of a t distribution</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -1.984467  1.984467</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1"></a><span class="dv">2</span> <span class="sc">*</span> <span class="fu">pt</span>(<span class="fu">abs</span>(tval), df, <span class="at">lower.tail =</span> <span class="cn">FALSE</span>) <span class="co"># p-values</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> (Intercept)            x 
+1.647043e-09 9.921663e-01 </code></pre>
+</div>
+</div>
+<p>In our model we can confidently reject the null hypothesis that the intercept term is zero, as its p-value is well below the standard significance threshold of 0.05. On the other hand, the same does not hold for <code>x</code>.</p>
+<section id="diabetes-case-study" class="level2"><h2 class="anchored" data-anchor-id="diabetes-case-study">4.1 Diabetes case study</h2>
+<p>Let us start with a simple model in which we study the association between age and diabetes severity.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb77"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1"></a>regr.age <span class="ot">&lt;-</span> <span class="fu">lm</span>(Y <span class="sc">~</span> AGE, <span class="at">data =</span> diab.dt.imputed2) <span class="co"># specify the data table of covariates</span></span>
+<span id="cb77-2"><a href="#cb77-2"></a><span class="fu">coef</span>(<span class="fu">summary</span>(regr.age))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>               Estimate Std. Error  t value     Pr(&gt;|t|)
+(Intercept) 100.4864995 23.9033257 4.203871 5.719054e-05
+AGE           0.7191313  0.5001159 1.437929 1.535762e-01</code></pre>
+</div>
+</div>
+<p>We could say that for any additional year of age, our diabetes score increases by 0.7 units. However, the standard error for age is high relative to its regression coefficient: this in turn does not allow us to reject the null hypothesis of no <code>age</code> effect, as the p-value (0.157) is above the conventional significance level of 0.05. We can come to the same conclusions by looking at the 95% confidence intervals for our coefficients: for <code>age</code>, 0 falls within the confidence intervals, so we do not have any support for rejecting the null hypothesis.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb79"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1"></a><span class="fu">confint</span>(regr.age)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                 2.5 %     97.5 %
+(Intercept) 53.0629821 147.910017
+AGE         -0.2730844   1.711347</code></pre>
+</div>
+</div>
+<p>However, this may be an issue of power. Our current sample size is 102 which is rather small and may well be too small to allow us to make confident inferences for the effect sizes we are looking for. With a larger dataset our conclusions may be different.</p>
+<p>Let us now explore the relationship between diabetes severity and other predictors, for example <code>HDL</code> (high density lipoprotein, the so called <strong>good cholesterol</strong>). This time we will first check if there is any support for including HDL cholesterol in a regression model by looking at the correlation with the outcome of interest.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb81"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href="#cb81-1"></a><span class="fu">with</span>(diab.dt.imputed2, <span class="fu">cor</span>(Y, HDL))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -0.3161334</code></pre>
+</div>
+</div>
+<p>We see a modest inverse relationship between the two variables, that is when <code>HDL</code> grows, the diabetes score decreases. We can confirm this with a linear regression model: again, given the presence of missing observations, R will perform the analysis of the complete dataset, the one that remains after all samples with missing values are removed.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb83"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb83-1"><a href="#cb83-1"></a>regr.hdl <span class="ot">&lt;-</span> <span class="fu">lm</span>(Y <span class="sc">~</span> HDL, <span class="at">data =</span> diab.dt.imputed2)</span>
+<span id="cb83-2"><a href="#cb83-2"></a><span class="fu">summary</span>(regr.hdl)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = Y ~ HDL, data = diab.dt.imputed2)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-104.641  -51.630   -7.176   36.703  167.660 
+
+Coefficients:
+            Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept) 215.5051    25.4562   8.466 2.24e-13 ***
+HDL          -1.5651     0.4697  -3.332  0.00121 ** 
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 65.3 on 100 degrees of freedom
+Multiple R-squared:  0.09994,   Adjusted R-squared:  0.09094 
+F-statistic:  11.1 on 1 and 100 DF,  p-value: 0.001208</code></pre>
+</div>
+</div>
+<p>The negative sign for the <code>HDL</code> coefficient means that there is an inverse association between <code>HDL</code> and the outcome variable: given that <code>Y</code> is larger the worse the patient’s diabetes status, then a negative coefficient can be interpreted as having a protective effect. An increase in HDL by one unit reduces the diabetes score by 1.57 units.</p>
+<p>Given that the p-value for <code>HDL</code> (0.00121) is below the significance threshold, we can say that <code>HDL</code> is significantly associated with the diabetes score. Notice that R adds a number of <code>*</code> according to the magnitude of the p-value.</p>
+<p>However, it may be argued that <code>HDL</code> depends on other factors, such as <code>age</code> and <code>sex</code>. By not taking into account these other risk factors, our conclusions may be misleading. Let uss add <code>age</code> and <code>sex</code> to the model with <code>HDL</code> and see what happens.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb85"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb85-1"><a href="#cb85-1"></a>regr <span class="ot">&lt;-</span> <span class="fu">lm</span>(Y <span class="sc">~</span> AGE <span class="sc">+</span> SEX <span class="sc">+</span> HDL, <span class="at">data =</span> diab.dt.imputed2)</span>
+<span id="cb85-2"><a href="#cb85-2"></a><span class="fu">summary</span>(regr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = Y ~ AGE + SEX + HDL, data = diab.dt.imputed2)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-113.34  -42.91  -11.66   43.20  168.20 
+
+Coefficients:
+            Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept) 165.5696    32.3109   5.124 1.54e-06 ***
+AGE           1.3812     0.5188   2.662   0.0091 ** 
+SEXM         38.2346    15.7537   2.427   0.0171 *  
+HDL          -2.2393     0.5241  -4.273 4.55e-05 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 63.68 on 96 degrees of freedom
+  (2 observations deleted due to missingness)
+Multiple R-squared:  0.1781,    Adjusted R-squared:  0.1525 
+F-statistic: 6.936 on 3 and 96 DF,  p-value: 0.0002826</code></pre>
+</div>
+</div>
+<p>We can claim that there is a significant association between <code>HDL</code> and our outcome variable even after adjusting for <code>age</code> and <code>sex</code>. Indeed, the effect size has increased: earlier we saw that one additional unit of <code>HDL</code> would decrease the diabetes score by 1.57, but after taking into account <code>age</code> and <code>sex</code>, the score would decrease by 2.2 units. Note that in this model, we can now claim that <code>age</code> has a non-zero effect on the diabetes score. This can be interpreted as follows: while <code>age</code> does not seem to be able to explain our outcome variable directly, it can explain the residuals produced by having <code>sex</code> and <code>HDL</code> in the model. It is customary to start looking at associations one variable at a time after adjusting for some known confounders (such as <code>age</code>, <code>sex</code>, <code>study cohort</code>, etc), that is variables that are known to affect the outcome or other predictors. Confounders are called like that because if they are ignored, they may change the conclusions of our investigation, sometimes in a drastic manner.</p>
+</section><section id="standardised-coefficients" class="level2"><h2 class="anchored" data-anchor-id="standardised-coefficients">4.2 Standardised coefficients</h2>
+<p>What can we claim about the effect size of the variables in the model? Given that each variable has its own unit measure, it iss impossible to compare effect sizes directly. We need to scale variables in such a way that accounts for the spread of each variable. We accomplish this by dividing each continuous variable by its standard deviation, which produces standardised coefficients. Here we use of <code>:=</code> and <code><a href="https://rdrr.io/r/base/lapply.html">lapply()</a></code> which allows to modify the data table in place across column (lists).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb87"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb87-1"><a href="#cb87-1"></a>diab.dt.sd1 <span class="ot">&lt;-</span> <span class="fu">copy</span>(diab.dt.imputed2)</span>
+<span id="cb87-2"><a href="#cb87-2"></a></span>
+<span id="cb87-3"><a href="#cb87-3"></a>covar.cols <span class="ot">&lt;-</span> <span class="fu">colnames</span>(diab.dt.sd1[, <span class="sc">-</span><span class="fu">c</span>(<span class="st">"PAT"</span>, <span class="st">"SEX"</span>, <span class="st">"Y"</span>)]) <span class="co"># Exclude non covariate columns</span></span>
+<span id="cb87-4"><a href="#cb87-4"></a></span>
+<span id="cb87-5"><a href="#cb87-5"></a>diab.dt.sd1[, (covar.cols) <span class="sc">:</span><span class="er">=</span> <span class="fu">lapply</span>(</span>
+<span id="cb87-6"><a href="#cb87-6"></a>            .SD, <span class="cf">function</span>(x) x <span class="sc">/</span> <span class="fu">sd</span>(x)), </span>
+<span id="cb87-7"><a href="#cb87-7"></a>            .SDcols <span class="ot">=</span> covar.cols]</span>
+<span id="cb87-8"><a href="#cb87-8"></a></span>
+<span id="cb87-9"><a href="#cb87-9"></a><span class="fu">summary</span>(<span class="fu">lm</span>(Y <span class="sc">~</span> AGE <span class="sc">+</span> SEX <span class="sc">+</span> HDL, <span class="at">data =</span> diab.dt.sd1))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = Y ~ AGE + SEX + HDL, data = diab.dt.sd1)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-113.34  -42.91  -11.66   43.20  168.20 
+
+Coefficients:
+            Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)  165.570     32.311   5.124 1.54e-06 ***
+AGE           18.722      7.032   2.662   0.0091 ** 
+SEXM          38.235     15.754   2.427   0.0171 *  
+HDL          -30.977      7.250  -4.273 4.55e-05 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 63.68 on 96 degrees of freedom
+  (2 observations deleted due to missingness)
+Multiple R-squared:  0.1781,    Adjusted R-squared:  0.1525 
+F-statistic: 6.936 on 3 and 96 DF,  p-value: 0.0002826</code></pre>
+</div>
+</div>
+<p>This allows us to state that the effect of one standard deviation change in <code>HDL</code> is almost double than what produced by a change of one standard deviation in <code>age</code> (but in opposite directions). In real-life analyses we generally work with standardised variables, so that comparing effects sizes of different variables is straightforward. When producing a model for clinical use, we may instead want to report equations that are in the original units (unstandardised), as a clinician will not have access to standard deviations.</p>
+</section><section id="design-matrix" class="level2"><h2 class="anchored" data-anchor-id="design-matrix">4.3 Design matrix</h2>
+<p>The design matrix is the matrix of all elements in the predictors and the intercept. To retrieve it, we can use function <code><a href="https://rdrr.io/r/stats/model.matrix.html">model.matrix()</a></code> on a fitted regression object or on a model formula. When using a formula it is not necessary to specify the outcome variable, as this does not enter the design matrix.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb89"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb89-1"><a href="#cb89-1"></a>X <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(<span class="sc">~</span> AGE <span class="sc">+</span> SEX <span class="sc">+</span> HDL, <span class="at">data =</span> diab.dt.imputed2) </span>
+<span id="cb89-2"><a href="#cb89-2"></a><span class="co"># same as model.matrix(regr)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Have a look at <code>X</code> by entering <code>View(X)</code> in your console. As <code>SEX</code> is a categorical variable (with levels <code>F</code> and <code>M</code>), when it is used in the model, its levels are coded as dummy variables. Given a reference category (in this case, being female), we code all other categories by contrast: this means that we create a binary variable (R assigns the name <code>SEXM</code> to it) which codes for being male.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb90"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb90-1"><a href="#cb90-1"></a><span class="fu">head</span>(diab.dt.imputed2[, <span class="fu">c</span>(<span class="st">"AGE"</span>, <span class="st">"SEX"</span>)])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   AGE SEX
+1:  59   F
+2:  48   M
+3:  72   F
+4:  24   M
+5:  50   M
+6:  23   M</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb92"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb92-1"><a href="#cb92-1"></a><span class="fu">head</span>(<span class="fu">model.matrix</span>(<span class="sc">~</span> AGE <span class="sc">+</span> SEX, <span class="at">data=</span>diab.dt.imputed2))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  (Intercept) AGE SEXM
+1           1  59    0
+2           1  48    1
+3           1  72    0
+4           1  24    1
+5           1  50    1
+6           1  23    1</code></pre>
+</div>
+</div>
+<p>For a categorical variable with <span class="math inline">\(k\)</span> levels, the design matrix contains <span class="math inline">\(k − 1\)</span> dummy variables corresponding to all non-reference categories. For example, suppose we categorised patients by <code>age</code> in three strata:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb94"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb94-1"><a href="#cb94-1"></a>diab.dt.imputed2<span class="sc">$</span>AGE.CAT <span class="ot">&lt;-</span> <span class="fu">cut</span>(diab.dt.imputed2<span class="sc">$</span>AGE, <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">40</span>, <span class="dv">60</span>, <span class="cn">Inf</span>))</span>
+<span id="cb94-2"><a href="#cb94-2"></a><span class="fu">head</span>(diab.dt.imputed2[, <span class="fu">c</span>(<span class="st">"AGE"</span>, <span class="st">"AGE.CAT"</span>)])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   AGE  AGE.CAT
+1:  59  (40,60]
+2:  48  (40,60]
+3:  72 (60,Inf]
+4:  24   (0,40]
+5:  50  (40,60]
+6:  23   (0,40]</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb96"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb96-1"><a href="#cb96-1"></a><span class="fu">head</span>(<span class="fu">model.matrix</span>(<span class="sc">~</span> AGE.CAT, <span class="at">data =</span> diab.dt.imputed2)) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  (Intercept) AGE.CAT(40,60] AGE.CAT(60,Inf]
+1           1              1               0
+2           1              1               0
+3           1              0               1
+4           1              0               0
+5           1              1               0
+6           1              0               0</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb98"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb98-1"><a href="#cb98-1"></a><span class="co"># reference level is (0,40]</span></span>
+<span id="cb98-2"><a href="#cb98-2"></a>diab.dt.imputed2<span class="sc">$</span>AGE.CAT <span class="ot">&lt;-</span> <span class="cn">NULL</span> </span>
+<span id="cb98-3"><a href="#cb98-3"></a><span class="co"># remove the variable from the table</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>One of the most important outputs from a regression model is the vector of fitted values <span class="math inline">\(\hat{y} = X \hat{\beta}\)</span>, where <span class="math inline">\(X\)</span> is our design matrix and <span class="math inline">\(\hat{\beta}\)</span> are the regression coefficients.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb99"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb99-1"><a href="#cb99-1"></a>regr <span class="ot">&lt;-</span> <span class="fu">lm</span>(Y <span class="sc">~</span> AGE <span class="sc">+</span> SEX <span class="sc">+</span> HDL, <span class="at">data =</span> diab.dt.imputed2)</span>
+<span id="cb99-2"><a href="#cb99-2"></a></span>
+<span id="cb99-3"><a href="#cb99-3"></a>X <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(regr) <span class="co"># design matrix</span></span>
+<span id="cb99-4"><a href="#cb99-4"></a>beta.hat <span class="ot">&lt;-</span> <span class="fu">coef</span>(regr) <span class="co"># regression coefficients</span></span>
+<span id="cb99-5"><a href="#cb99-5"></a>y.hat <span class="ot">&lt;-</span> X <span class="sc">%*%</span> beta.hat <span class="co"># matrix multiplication</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We generally do not need to compute it explicitly, as it is already present in the regression object alongside other helpful quantities.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb100"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb100-1"><a href="#cb100-1"></a><span class="co"># Observed data used to fit the model</span></span>
+<span id="cb100-2"><a href="#cb100-2"></a>observed <span class="ot">&lt;-</span> regr<span class="sc">$</span>model<span class="sc">$</span>Y</span>
+<span id="cb100-3"><a href="#cb100-3"></a></span>
+<span id="cb100-4"><a href="#cb100-4"></a><span class="co"># New values for our variable of interest estimated by fitting the model</span></span>
+<span id="cb100-5"><a href="#cb100-5"></a>fits <span class="ot">&lt;-</span> regr<span class="sc">$</span>fitted.values</span>
+<span id="cb100-6"><a href="#cb100-6"></a></span>
+<span id="cb100-7"><a href="#cb100-7"></a><span class="co"># Residuals i.e. difference between observed and estimated values</span></span>
+<span id="cb100-8"><a href="#cb100-8"></a>res <span class="ot">&lt;-</span> regr<span class="sc">$</span>residuals</span>
+<span id="cb100-9"><a href="#cb100-9"></a></span>
+<span id="cb100-10"><a href="#cb100-10"></a><span class="fu">all.equal</span>(res, observed <span class="sc">-</span> fits)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+<p>Now let us examine how much of the data the assumed linear relationship explains. We can examine this by looking at the <span class="math inline">\(R^2\)</span> value but first let us examine how it is estimated.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb102"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb102-1"><a href="#cb102-1"></a>num.predictors <span class="ot">&lt;-</span> <span class="dv">3</span> <span class="co"># age, sex and hdl</span></span>
+<span id="cb102-2"><a href="#cb102-2"></a>n <span class="ot">&lt;-</span> <span class="fu">length</span>(res)</span>
+<span id="cb102-3"><a href="#cb102-3"></a></span>
+<span id="cb102-4"><a href="#cb102-4"></a><span class="co"># Residual standard error</span></span>
+<span id="cb102-5"><a href="#cb102-5"></a><span class="fu">sqrt</span>(<span class="fu">sum</span>(res<span class="sc">^</span><span class="dv">2</span>) <span class="sc">/</span> (n <span class="sc">-</span> num.predictors <span class="sc">-</span> <span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 63.67939</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb104"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb104-1"><a href="#cb104-1"></a><span class="co"># R-squared </span></span>
+<span id="cb104-2"><a href="#cb104-2"></a>r.squared <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">-</span> <span class="fu">sum</span>(res<span class="sc">^</span><span class="dv">2</span>) <span class="sc">/</span> <span class="fu">sum</span>((observed <span class="sc">-</span> <span class="fu">mean</span>(observed))<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb104-3"><a href="#cb104-3"></a>r.squared</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.1781466</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb106"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb106-1"><a href="#cb106-1"></a><span class="co"># Note that the numerator is the sum of the squared residuals i.e. the value we minimised with OLS, and the denominator simply scales it.</span></span>
+<span id="cb106-2"><a href="#cb106-2"></a></span>
+<span id="cb106-3"><a href="#cb106-3"></a><span class="co"># Adjusted R-squared</span></span>
+<span id="cb106-4"><a href="#cb106-4"></a> <span class="dv">1</span> <span class="sc">-</span> (<span class="dv">1</span> <span class="sc">-</span> r.squared )<span class="sc">*</span>(n <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">/</span> (n <span class="sc">-</span> num.predictors <span class="sc">-</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.1524637</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb108"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb108-1"><a href="#cb108-1"></a> <span class="co"># It is essentially a standardized R-squared which penalises for the number of predictors.</span></span>
+<span id="cb108-2"><a href="#cb108-2"></a> </span>
+<span id="cb108-3"><a href="#cb108-3"></a> <span class="fu">summary</span>(regr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = Y ~ AGE + SEX + HDL, data = diab.dt.imputed2)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-113.34  -42.91  -11.66   43.20  168.20 
+
+Coefficients:
+            Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept) 165.5696    32.3109   5.124 1.54e-06 ***
+AGE           1.3812     0.5188   2.662   0.0091 ** 
+SEXM         38.2346    15.7537   2.427   0.0171 *  
+HDL          -2.2393     0.5241  -4.273 4.55e-05 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 63.68 on 96 degrees of freedom
+  (2 observations deleted due to missingness)
+Multiple R-squared:  0.1781,    Adjusted R-squared:  0.1525 
+F-statistic: 6.936 on 3 and 96 DF,  p-value: 0.0002826</code></pre>
+</div>
+</div>
+<p>Looking at the <span class="math inline">\(R^2\)</span> value we can see that while <code>Age</code>, <code>Sex</code> and <code>HDL</code> are all significantly associated with diabetes they do not explain much of the observed variation. Furter investigation is therefore required.</p>
+<section id="exercise-4.1" class="level3"><h3 class="anchored" data-anchor-id="exercise-4.1">Exercise 4.1</h3>
+<p>Using the <code>diab.txt</code> dataset from Learn:</p>
+<ul>
+<li>Name the new data table <code>diab.new.dt</code> and fit a linear regression model for <code>Y</code> adjusted for <code>age</code>, <code>sex</code> and <code>total cholesterol (TC)</code>. Create a dataframe called <code>results.table</code> with a column for each of the <strong>4 numbers</strong>: regression coefficient and p-value for total cholesterol, <span class="math inline">\(R^2\)</span> and adjusted <span class="math inline">\(R^2\)</span> of the model and a rowname.</li>
+<li>Write a function which takes one predictor fits a linear model and appends a row of results to <code>results.table</code> in the same format as before with the name of the predictor in the rowname. Identify the predictor that produces the best performing model.</li>
+<li>Starting from the set of covariates used in the model with best performance determined above, write a function to fit all possible linear regression models that use one additional predictor. Produce a table of <span class="math inline">\(R^2\)</span> and adjusted <span class="math inline">\(R^2\)</span> of all models you fitted. Report the adjusted <span class="math inline">\(R^2\)</span> of the model of best fit. You may need to loop see R documentation for the function <code>for()</code>.</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb110"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb110-1"><a href="#cb110-1"></a><span class="co"># Enter code here.</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section><section id="exercise-4.2" class="level3"><h3 class="anchored" data-anchor-id="exercise-4.2">Exercise 4.2</h3>
+<p>Using the <code>birthweight.txt</code> dataset from Learn:</p>
+<ul>
+<li>Explore the dataset and prepare it for the analysis (do not impute it).</li>
+<li>Summarise the distribution of birth weight for babies born to women who smoked during pregnancy and for babies born to women who did not. Report the percentage of babies born weighing under 2.5kg in the two strata of smoking status.</li>
+<li>Fit a linear regression model to establish if there is an association between birth weight and smoking and how much birth weight changes according to smoking.</li>
+<li>By how much is the average length of gestation different for first born children? Is the difference statistically significant? Is the mother’s pre-pregnancy weight associated with length of gestation?</li>
+<li>Is birth weight associated with the mother’s pre-pregnancy weight? Is the association independent of height of the mother?</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb111"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb111-1"><a href="#cb111-1"></a><span class="co"># Enter code here.</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section></section></section></main><!-- /main column --><script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

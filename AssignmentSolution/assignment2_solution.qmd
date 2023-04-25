@@ -1,0 +1,1172 @@
+---
+title: "Assignment 2 Solution"
+subtitle: "Biomedical Data Science (MATH11174), 22/23, Semester 2"
+author: "Reproduced by Johnny MyungWon Lee"
+date: "2023-04-06"
+date-format: "long"
+format: 
+  pdf:
+    code-line-numbers: true
+editor: visual
+highlight-style: atom-one
+---
+
+# **Due on Thursday, 6th of April 2023, 5:00pm**
+
+::: callout-important
+## Pay Attention
+
+The assignment is marked out of 100 points, and will contribute to ***30%*** of your final mark. The aim of this assignment is to produce a precise report in biomedical studies with the help of statistical and machine learning. Please complete this assignment using **Quarto/Rmarkdown file and render/knit this document only in PDF format** (rendering while solving the questions will prevent sudden panic before submission!). Submit using the **gradescope link on Learn** and ensure that **all questions are tagged accordingly**. You can simply click render on the top left of Rstudio (`Ctrl+Shift+K`). If you cannot render/knit to PDF directly, open **Terminal** in your RStudio (`Alt+Shift+R`) and type `quarto tools install tinytex`, otherwise please follow this [link](https://quarto.org/docs/output-formats/pdf-engine.html). If you have any code that does not run you will not be able to render nor knit the document so comment it as you might still get some grades for partial code.
+
+**Clear and reusable code will be rewarded**. Codes without proper indentation, choice of variable identifiers, **comments**, efficient code, etc will be penalised. An initial code chunk is provided after each subquestion but **create as many chunks as you feel is necessary** to make a clear report. Add plain text explanations in between the chunks when required to make it easier to follow your code and reasoning. Ensure that all answers containing multiple values should be presented and formatted only with `kable()` and `kable_styling()` otherwise penalised (**no use of `print()` or `cat()`**). All plots must be displayed with clear title, label and legend otherwise penalised.
+:::
+
+```{r setup, include=FALSE}
+#Add all your packages here
+library(data.table)
+library(caret)
+library(corrplot)
+library(glmnet)
+library(MASS)
+library(pROC)
+library(kableExtra)
+library(corrplot)
+library(factoextra)
+library(ggpubr)
+library(lmtest)
+```
+
+# Problem 1 (27 points)
+
+File `wdbc2.csv` (available from the accompanying zip folder on Learn) refers to a study of breast cancer where the outcome of interest is the type of the tumour (benign or malignant, recorded in column `diagnosis`). The study collected $30$ imaging biomarkers on $569$ patients.
+
+## Problem 1.a (7 points)
+
+-   Using package `caret`, create a data partition so that the training set contains $70\%$ of the observations (set the random seed to $984065$ beforehand).
+-   Fit both a ridge and Lasso regression model which use cross validation on the training set to diagnose the type of tumour from the $30$ biomarkers.
+-   Then use a plot to help identify the penalty parameter $\lambda$ that maximises the AUC and report the $\lambda$ for both ridge and Lasso regression using `kable()`.
+-   ***Note : there is no need to use the `prepare.glmnet()` function from lab 4, using `as.matrix()` with the required columns is sufficient.***
+
+```{r}
+wdbc.dt <- fread("data_assignment2/wdbc2.csv")
+## Creating partition
+set.seed(984065)
+train.idx <-createDataPartition(wdbc.dt$diagnosis, p = 0.7)$Resample1
+## Edit the outcome to be a factor (binary), drop patient id
+wdbc.dt <- wdbc.dt[, !"id", with = FALSE]
+wdbc.dt$diagnosis <- factor(wdbc.dt$diagnosis, 
+                      levels=c("benign","malignant"))
+## Split into train and test subsets
+wdbc.train.dt <- wdbc.dt[train.idx,]
+wdbc.test.dt <- wdbc.dt[!train.idx,]
+## Store the outcome and the covariates separately
+y.wdbc.train.dt <- wdbc.train.dt$diagnosis
+x.wdbc.train.dt <- as.matrix(wdbc.train.dt[, !"diagnosis", with = FALSE])
+y.wdbc.test.dt <- wdbc.test.dt$diagnosis
+x.wdbc.test.dt <- as.matrix(wdbc.test.dt[, !"diagnosis", with = FALSE])
+```
+
+```{r}
+## Fit lasso and ridge models
+fit.cv.lasso <- cv.glmnet(x.wdbc.train.dt, y.wdbc.train.dt, 
+                family = "binomial", type.measure = "auc", alpha = 1)
+fit.cv.ridge <- cv.glmnet(x.wdbc.train.dt, y.wdbc.train.dt, 
+                family = "binomial", type.measure = "auc", alpha = 0)
+```
+
+```{r}
+## Plot the cross-validation curves
+par(mfrow = c(1,2), mar = c(4,4,5,2))
+plot(fit.cv.lasso, main = "Lasso")
+plot(fit.cv.ridge, main = "Ridge")
+```
+
+```{r}
+## Print true lambda values
+lasso.lambda <- fit.cv.lasso$lambda.min
+ridge.lambda <- fit.cv.ridge$lambda.min
+kable(data.table(lasso.lambda, ridge.lambda), 
+      caption = "Penalty Parameter that maximises AUC") |> 
+  kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+The left-most dotted line in each cross-validation curve indicates the $\lambda$ parameter that maximises AUC. The two values are approximately $\exp(−4.1)$ for the lasso model and $\exp(−2.3)$ for the ridge model respectively. The exact values can be seen at Table 1.
+
+## Problem 1.b (2 points)
+
+-   Create a data table that for each value of `lambda.min` and `lambda.1se` for each model fitted in **problem 1.a** that contains the corresponding $\lambda$, AUC and model size.
+-   Use $3$ significant figures for floating point values and comment on these results.
+-   ***Note: The AUC values are stored in the field called `cvm`***.
+
+```{r}
+## Find indices of lambdas that maximizes AUC and w/in 1 SE of max AUC
+idx.lasso.min <- fit.cv.lasso$index["min",]
+idx.lasso.1se <- fit.cv.lasso$index["1se",]
+idx.ridge.min <- fit.cv.ridge$index["min",]
+idx.ridge.1se <- fit.cv.ridge$index["1se",]
+
+lambda.vals <- c(signif(fit.cv.lasso$lambda.min, 3), 
+                      signif(fit.cv.ridge$lambda.min, 3), 
+                      signif(fit.cv.lasso$lambda.1se, 3),
+                      signif(fit.cv.ridge$lambda.1se, 3))
+auc.vals <- signif(c(fit.cv.lasso$cvm[idx.lasso.min], 
+                    fit.cv.ridge$cvm[idx.ridge.min],
+                    fit.cv.lasso$cvm[idx.lasso.1se],
+                    fit.cv.ridge$cvm[idx.ridge.1se]), 3)
+model.size <- signif(c(fit.cv.lasso$nzero[idx.lasso.min], 
+                      fit.cv.ridge$nzero[idx.ridge.min],
+                      fit.cv.lasso$nzero[idx.lasso.1se], 
+                      fit.cv.ridge$nzero[idx.ridge.1se]), 3)
+
+dt <- data.table(model = c("Lasso.min","Ridge.min", "Lasso.1se", "Ridge.1se"), 
+                  lambda = lambda.vals, 
+                  AUC = auc.vals,
+                  Model.Size = model.size)
+
+kable(dt, caption = "Lambda values with its model size and AUC") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+$\lambda$ is a penalty parameter that shrinks the coefficient to zero for Lasso and near zero for Ridge. This is the reason why, Lasso has a smaller model size compared to Ridge regression. From Table 2, Lasso with $\lambda = 0.0159$ will have model size of $7$ and Ridge with $\lambda = 0.104$ will have model size of $30$ (unchanged). Looking at Table 1. we can see that `lambda.min` for both Lasso and Ridge regression have low AUC values compared to `lambda.1se`. This is because, the `lambda.min` values maximises the AUC values and minimises the error. Then, we compare the model accuracy among Lasso and Ridge. Lasso has the AUC value of $0.976$ and Ridge has $0.973$. From this, Lasso regression represents the training dataset better than Ridge.
+
+## Problem 1.c (7 points)
+
+-   Perform both backward (we denote this as **model B**) and forward (**model S**) stepwise selection on the same training set derived in **problem 1.a**. Mute all the trace by setting `trace = FALSE`.
+-   Report the variables selected and their standardised regression coefficients in increasing order of the absolute value of their standardised regression coefficient.
+-   Discuss the results and how the different variables entering or leaving the model influenced the final result.
+-   ***Note : you can mute the warning by assigning `{r warning = FALSE}`***
+
+```{r}
+## Standardize all variables
+wdbc.train.scaled.dt <- wdbc.train.dt %>% copy()
+covar.colnames <- colnames(wdbc.train.dt[,-c("diagnosis")])
+wdbc.train.scaled.dt <- wdbc.train.scaled.dt[, 
+              (covar.colnames) := lapply(.SD, function(x) x / sd(x)),
+              .SDcols = covar.colnames]
+## Training set standard deviations (store to use later for test set)
+wdbc.train.df <- as.data.frame(copy(wdbc.train.dt))
+wdbc.train.sd <- apply(wdbc.train.df[, (covar.colnames)], 2, sd)
+
+```
+
+```{r warning=FALSE}
+## Define full model and null model
+full.model <- glm(diagnosis~., data = wdbc.train.scaled.dt, family = "binomial")
+null.model <- glm(diagnosis~1, data = wdbc.train.scaled.dt, family = "binomial")
+## Perform forward and backward stepwise selection
+model.B <- stepAIC(full.model, direction = "back", trace = FALSE)
+model.S <- stepAIC(null.model, scope = list(upper = full.model),
+direction = "forward", trace = FALSE)
+```
+
+```{r}
+## Setting coefficients in decreasing order
+B.order <- order(abs(model.B$coefficients), decreasing = FALSE)
+S.order <- order(abs(model.S$coefficients), decreasing = FALSE)
+## Tabulating coefficients for each model
+table <- list(model.B$coefficients[B.order], 
+              model.S$coefficients[S.order])
+
+kable(table, col.names = "Coefficient", 
+      caption = "Coefficients of Model B and Model S") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+The process of backward elimination is performed, starting with a full model that includes all covariates. From there, the removal of each covariate is tested against the others, by comparing the AIC values for a model without that covariate (including no removal, using the current model). The resulting model with the lowest AIC is selected, and that covariate removed. The process then begins again with the updated model. This process is repeated until the option of not removing any covariate produces a model with the lowest AIC score. On the first iteration, it is seen that removing the covariate `smoothness` will produce a model with the lowest AIC score. This is removed and then on the next iteration the covariate `compactness.worst` is then selected for removal. The process is repeated and the covariates that are removed can be seen in the output below; the top covariate is selected for removal on each iteration. It is interesting to note that **Model B** has excluded `concavepoints.worst` from the model on the fourth iteration, considering that Lasso regression found this covariate to be highly important in determining tumor type.
+
+It is interesting to see that it contains only three of the seven biomarkers that were selected by the Lasso regression model (for AUC within one standard error of maximum). The biomarkers of `radius.worst` and `area.worst` appear to have the largest impact in model B. Forward selection is now performed, where covariates are individually added to a null model, the AIC score evaluated for each model, and the model with the lowest AIC score selected. The process is then repeated with the updated model, and the top covariate in each iteration below is selected for addition to the model.
+
+Overall, the **Model B** and **Model S** each selected $13$ biomarkers, but only four biomarkers in common: `area.worst`, `radius.worst`, `radius.stderr`, and `area`. Both models share the top two most impactful covariates, but the process of the different variables leaving the model in backwards elimination and entering the **Model S** has resulted in different coefficient values and nine non-shared covariates being selected for the model. This demonstrates that the selection process used can have a significant impact on final model choice when there are many covariates.
+
+## Problem 1.d (3 points)
+
+-   Compare the goodness of fit of **model B** and **model S**
+-   Interpret and explain the results you obtained.
+-   Report the values using `kable()`.
+
+```{r}
+## Computing the AIC and BIC values of each model
+dt <- data.table(c("Model B AIC", "Model S AIC", "Model B BIC", "Model S BIC"),
+                c(AIC(model.B), AIC(model.S), BIC(model.B), BIC(model.S)))
+colnames(dt) <- c("Goodness of fit", "Values")
+kable(t(dt), caption = "Goodness of fit for Model B and Model S") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+```{r}
+## Testing goodness of fit of model B and model S
+chisq.b <- pchisq(model.B$null.deviance - model.B$deviance, 
+                  df = 12, lower.tail = FALSE)
+chisq.s <- pchisq(model.S$null.deviance - model.S$deviance, 
+                  df = 14, lower.tail = FALSE)
+
+dt <- data.table(c("Model B", "Model S"),
+                  c(chisq.b, chisq.s))
+colnames(dt) <-c("", "p-value")
+kable(t(dt), caption = "Goodness of fit for Model B and Model S") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+**Model B** has a AIC value of $`r AIC(model.B)`$ and **Model S** has a AIC value of $`r AIC(model.S)`$. **Model B** has a lower AIC value thus a better model. To further validate this, we can also refer to the result from $\chi^2$-test. We obtained the p-value for each model where Model B has $`r round(chisq.b)`$ and **Model S** has $`r round(chisq.s)`$. Since **Model B** has a lower p-value, we can conclude that **Model B** is a better fit to the training dataset.
+
+## Problem 1.e (2 points)
+
+-   Plot the ROC curve of the trained model for both **model B** and **model S**. Display with clear title, label and legend.
+-   Report AUC values in 3 significant figures for both **model B** and **model S** using `kable()`.
+-   Discuss which model has a better performance.
+
+```{r}
+## Data frame for actual observations for the outcome in train set,
+## and predicted outcome from the model
+pred.model.B <- data.frame(obs = wdbc.train.scaled.dt$diagnosis,
+pred = predict(model.B, newdata = wdbc.train.scaled.dt, type = "response"))
+## Repeat process for model S
+pred.model.S <- data.frame(obs = wdbc.train.scaled.dt$diagnosis,
+pred = predict(model.S, newdata = wdbc.train.scaled.dt, type = "response"))
+
+## Calculate the predictive ability of the training models
+suppressMessages(invisible({
+  roc.B <- roc(obs ~ pred, data = pred.model.B, plot = TRUE, xlim = c(0,1), 
+            col = "red", main = "ROC curves for Model B and Model S")
+  roc.S <- roc(obs ~ pred, data = pred.model.S, plot = TRUE, xlim = c(0,1), 
+            col = "blue", add = TRUE)
+  legend("bottomleft", legend = c("Model B", "Model S"),
+          col = c("red", "blue"), lty = 1, cex = 0.8, bty = "n")
+}))
+
+## Tabulating the AUC values for Model B and Model S
+dt <- data.table(c("Model B", "Model S"),
+                  c(signif(roc.B$auc, 3), signif(roc.S$auc, 3)))
+colnames(dt) <-c("", "AUC")
+kable(t(dt), caption = "AUC for Model B and Model S") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+We computed the ROC curve using `roc()`, to compare the two models, **Model B** and **Model S**. Visually, we could not tell much difference. However, looking at Table 6, we can see that both models have high accuracy with the values of $`r signif(roc.B$auc, 3)`$ and $`r signif(roc.S$auc, 3)`$ respectively. Since **Model B** has a slight higher value, like **problem 1.a**, we can conclude that **Model B** is a better model.
+
+## Problem 1.f (6 points)
+
+-   Use the four models to predict the outcome for the observations in the test set (use the $\lambda$ at $1$ standard error for the penalised models).
+-   Plot the ROC curves of these models (on the sameplot, using different colours) and report their test AUCs.
+-   Compare the training AUCs obtained in **problems 1.b and 1.e** with the test AUCs and discuss the fit of the different models.
+-   Display with clear title, label and legend.
+
+```{r warning=FALSE}
+## Prediction of Lasso and Ridge Regression Model
+lasso.pred <- predict(fit.cv.lasso, newx = x.wdbc.test.dt, 
+                      s = "lambda.1se", type = "response")
+ridge.pred <- predict(fit.cv.ridge, newx = x.wdbc.test.dt, 
+                      s = "lambda.1se", type = "response")
+
+## Prediction of Model B and Model S
+wdbc.test.dt. <- wdbc.test.dt %>% copy()
+for (i in covar.colnames){
+  wdbc.test.scaled.dt <- wdbc.test.dt.[, 
+  (i) := lapply(.SD, function(x) x / sd(x)), .SDcols = i]
+}
+
+pred.B <- predict(model.B, newdata = wdbc.test.scaled.dt,
+                   type = "response")
+pred.S <- predict(model.S, newdata = wdbc.test.scaled.dt,
+                   type = "response")
+
+## Plotting ROC
+suppressMessages(invisible({
+auc.lasso <- roc(y.wdbc.test.dt, lasso.pred, plot = TRUE, 
+              xlim = c(0,1), col = "red", main = "ROC curves on Testing Set")$auc
+auc.ridge <- roc(y.wdbc.test.dt, ridge.pred, plot = TRUE, 
+              col = "blue", add = TRUE)$auc
+auc.B <- roc(y.wdbc.test.dt, pred.B, plot = TRUE, 
+              col = "green", add = TRUE)$auc
+auc.S <- roc(y.wdbc.test.dt, pred.S, plot = TRUE, 
+              col = "orange", add = TRUE)$auc
+legend("bottomleft", legend = c("Lasso", "Ridge", "Model B", "Model S"),
+col = c("red", "blue", "green", "orange"), lty = 1, cex = 0.8, bty = "n")
+}))
+
+dt <- data.table(c("Lasso", "Ridge", "Model B", "Model S"),
+                  signif(c(fit.cv.lasso$cvm[idx.lasso.1se],
+                    fit.cv.ridge$cvm[idx.ridge.1se], 
+                    roc.B$auc, roc.S$auc),3),
+                  signif(c(auc.lasso, auc.ridge, auc.B, auc.S), 3))
+colnames(dt) <- c("", "training AUC", "testing AUC")
+kable(t(dt), caption = "Training and Testing Acuraccy of each Model") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+Comparison of the AUC values of all four models and their prediction performance on the test set of data, reveals that the forward selection **Model S** appears to have the best performance. The backwards elimination **Model B** performed overall the best on the training data, but performed the worst of all models on the test set. This indicates there may have been some over-fitting that occurred during model development. Both Lasso and ridge regression performed relatively well, with similar training and test AUC values. Ridge regression performed better on the test set, but this is unusual and likely due to chance (randomness of the train and test split). All of these AUC values are excellent, but it is seen that the forward selection **Model S** appears to have the best predictive ability.
+
+\newpage
+
+# Problem 2 (40 points)
+
+File `GDM.raw.txt` (available from the accompanying zip folder on Learn) contains $176$ `SNP`s to be studied for association with incidence of gestational diabetes (a form of diabetes that is specific to pregnant women). SNP names are given in the form `rs1234_X` where `rs1234` is the official identifier (rsID), and `X` (one of A, C, G, T) is the reference allele.
+
+## Problem 2.a (3 points)
+
+-   Read in file `GDM.raw.txt` into a data table named `gdm.dt`.
+-   Impute missing values in `gdm.dt` according to `SNP`-wise median allele count and display first $10$ rows and first $7$ columns using `kable()`.
+
+```{r}
+## Function to impute to median
+impute.to.median <- function(x) {
+  # Only apply function to numeric or integer columns
+  if (is.numeric(x) || is.integer(x)){
+  # Find index of missing values
+  na.idx <- is.na(x)
+  # Replace missing values with median of the observed values
+  x[na.idx] <- median(x, na.rm=TRUE)
+  }
+  return(x)
+}
+gdm.dt <- fread("data_assignment2/GDM.raw.txt")
+## Identify numeric columns, not including outcome
+numcols.gdm <- gdm.dt[, .SD, .SDcols = sapply(gdm.dt, is.numeric)] %>% colnames
+numcols.gdm <- numcols.gdm[!numcols.gdm %in% "pheno"]
+## Impute missing values with median
+gdm.dt.imputed <- gdm.dt %>% copy() %>%
+                .[, (numcols.gdm) := lapply(.SD, impute.to.median), 
+                .SDcols = numcols.gdm]
+kable(gdm.dt.imputed[c(1:10), c(1:7)], 
+      caption = "Gestational diabetes dataset") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+
+## Drop patient id
+gdm.dt.imputed <- gdm.dt.imputed[, !"ID", with = FALSE]
+## Store the outcome and the covariates separately
+y.gdm.dt.imputed <- gdm.dt.imputed[[2]]
+x.gdm.dt.imputed <- gdm.dt.imputed[, 3:(ncol(gdm.dt)-1)]
+```
+
+## Problem 2.b (8 points)
+
+-   Write function `univ.glm.test()` where it takes 3 arguements, `x`, `y` and `order`.
+-   `x` is a data table of `SNP`s, `y` is a binary outcome vector, and `order` is a boolean which takes `false` as a default value.
+-   The function should fit a logistic regression model for each `SNP` in `x`, and return a data table containing `SNP` names, regression coefficients, odds ratios, standard errors and p-values.
+-   If order is set to `TRUE`, the output data table should be ordered by increasing p-value.
+
+```{r}
+univ.glm.test <- function(x, y, order = FALSE){
+  stopifnot(nrow(x) == length(y))
+  ## Initialise data table
+  output <- data.table("SNP" = character(), "intercept" = numeric(),
+  "coefficients" = numeric(), "odds.ratios" = numeric(),
+  "std.error" = numeric(), "p.value" = numeric())
+  ## Run logistric regression on each SNP
+  for (i in 1:ncol(x)){
+    regr <- glm(y ~ x[[i]], family = binomial(link = "logit"))
+    summarised <- coef(summary(regr))
+    output <- rbind(output, list(names(x)[i], summarised[1,1],
+                    summarised[2,1], exp(summarised[2,1]), 
+                    summarised[2,2], summarised[2,4]))                 
+  }
+  ## Case when order set as TRUE
+  if(order == TRUE){
+    output <- output[order(p.value)]
+  }
+  return(output)
+}
+```
+
+This function takes in three arguments, `x` which should be a data table of `SNP`s and `y` a binary outcome vector. An optional argument `order` specifies whether results are ordered by increasing value. The function first creates an empty matrix to store results. It then collects all `SNP` names (column names), and runs a loop to build a model for each `SNP`. For each `SNP`, the column of data is regressed on the outcome variable using a logistical regression model with a logit link function. Model results are then individual stored in separate variables to make the code tidier. After this, all results for the `SNP` model are added as an additional row to the matrix of results. After the loop has finished, the matrix of results is then converted into a data.table. All columns apart from `SNP` name are then converted into a numeric to ensure that these are not accidentally interpreted as strings. If `order = TRUE`, then all model results are rearranged by increasing p-value with the smallest p-value at the top of the results.
+
+## Problem 2.c (5 points)
+
+-   Using function `univ.glm.test()`, run an association study for all the `SNP`s in `gdm.dt` against having gestational diabetes (column `pheno`) and name the output data table as `gdm.as.dt`.
+-   Print the first $10$ values of the output from `univ.glm.test()` using `kable()`.
+-   For the `SNP` that is most strongly associated to increased risk of gestational diabetes and the one with most significant protective effect, report the summary statistics using `kable()` from the GWAS.
+-   Report the $95\%$ and $99\%$ confidence intervals on the odds ratio using `kable()`.
+
+```{r}
+## Run glm on each SNP in the gdm.dt data set
+gdm.as.dt <- univ.glm.test(x = x.gdm.dt.imputed, 
+                            y = y.gdm.dt.imputed, order = TRUE)
+kable(head(gdm.as.dt, 10), 
+      caption = "Logistic Regression Statistics for each SNP") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+```{r}
+## Extracting neccesary columns for table
+cols <- names(gdm.as.dt)[2:5]
+
+## Diving the data table to positive and negative coefficient
+pos.coeff <- gdm.as.dt[coefficients>0]
+neg.coeff <- gdm.as.dt[coefficients<0]
+
+## Identify SNP with highest association to increased risk
+max.SNP <- pos.coeff[which(pos.coeff$p.value==min(pos.coeff$p.value)),]
+max.SNP <- max.SNP[, (cols) := .SD, .SDcols = cols]
+
+## identify SNP with strongest protective effect
+min.SNP <- neg.coeff[which(neg.coeff$p.value==min(neg.coeff$p.value)),]
+min.SNP <- min.SNP[, (cols) := .SD, .SDcols = cols]
+
+## Tabulating the SNP associated with increased risk and protective effect
+kable(max.SNP, caption = "SNP associated with increased risk") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+
+kable(min.SNP, caption = "SNP associated with protective effect") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+```{r}
+## Calculate quantile value to multiply by
+q95 <- qnorm(0.975) ## 1.96 for 95% confint
+q99 <- qnorm(0.995) ## 2.56 for 99% confint
+## Computing confidence intervals for the most increased risk
+max.coef <- max.SNP$coefficients
+max.se <- max.SNP$std.error
+max.confint.95 <- round(exp(max.coef + q95 * max.se*c(-1,1)), 3)
+max.confint.99 <- round(exp(max.coef + q99 * max.se*c(-1,1)), 3)
+info.dt <- data.table(c("SNP", "95% lower", "95% upper", "99% lower", "99% upper"),
+                c(max.SNP$SNP, max.confint.95[1], max.confint.95[2], 
+                  max.confint.99[1], max.confint.99[2]))
+## Computing Confidence Intervals for most protective effect
+min.coef <- min.SNP$coefficients
+min.se <- min.SNP$std.error
+min.confint.95 <- round(exp(min.coef + q95 * min.se*c(-1,1)), 3)
+min.confint.99 <- round(exp(min.coef + q99 * min.se*c(-1,1)), 3)
+info.dt <- cbind(info.dt, 
+                 data.table(c(min.SNP$SNP, min.confint.95[1], min.confint.95[2], 
+                              min.confint.99[1], min.confint.99[2])))
+colnames(info.dt) <- c("", "Increased Risk", "Protective Effect")
+kable(t(info.dt), caption = "Confidence Intervals for SNP Associated") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+The association study considering all the `SNP`s in this data set provides insight on which `SNP` is most strongly associated with an increased risk of gestational diabetes and which has the strongest protective effect. The two are then identified and differentiated by looking at the p-value and magnitude of their regression coefficients. The `SNP` with most positive coefficient and p-value represents the `SNP` associated with an increase risk of gestational diabets. The SNP with most negative coefficient and lowest p-value represents the `SNP` associated with a strongest protective effect. 
+
+Thus, the `SNP` `rs12243326_A` is most strongly associated with an increased risk of gestational diabetes, where the presence of this gene (compared to the baseline) is associated with an odds ratio of $1.907$ that gestational diabetes will occur. For `rs12243326_A`, a $99\%$ confidence interval of $1.268$ and $2.867$ suggests that there is a range of $33.5\%$ and $150.3\%$ increase in the odds-ratio of having gestational diabetes to not. This suggests that even at the lower end of the CI there is a significant effect of having the `SNP` `rs12243326_A` on an increased risk of gestational diabetes.
+
+The `SNP` `rs2237897_T` provides the strongest protective effect against gestational diabetes, where the presence of this gene (compared to the baseline) is associated with an odds ratio of $0.644$ that gestational diabetes will occur. For `rs2237897_T`, a $99\%$ confidence interval of $0.482$ to $0.861$ suggests there is a range of a $25.2\%$ to $133.7\%$ decrease in the odds ratio of having gestational diabetes to not. This suggests that even at the upper end of the CI there is a significant effect of having the SNP `rs2237897_T` on a decreased risk of gestational diabetes.
+
+## Problem 2.d (4 points)
+
+-   Merge your GWAS results with the table of gene names provided in file `GDM.annot.txt` (available from the accompanying zip folder on Learn).
+-   For `SNP`s that have p-value $< 10^{-4}$ (`hit SNP`s) report `SNP` name, effect `allele`, chromosome number, corresponding `gene` name and `pos`.
+-   Using `kable()`, report for each `snp.hit` the names of the genes that are within a $1$Mb window from the `SNP` position on the chromosome.
+-   ***Note: That are genes that fall within +/- 1,000,000 positions using the `pos` column in the dataset.***
+
+```{r}
+## Importing table of gene names
+gdm.annot.dt <- fread("data_assignment2/GDM.annot.txt")
+## Splitting SNP name and effect allele for SNP model results
+new.gdm.dt <- gdm.as.dt %>% copy()
+new.gdm.dt[, c("snp", "allele") := tstrsplit(new.gdm.dt$SNP, "_", fixed = TRUE)]
+## Subsetting SNP_model_results table to only include SNPs wirh p-value < 1e-0.4
+snp.hit <- merge(gdm.annot.dt, new.gdm.dt, by.x = "snp", by.y = "snp")
+## Merging model results table with gene names table
+snp.w.genes <- snp.hit[p.value < 1e-4,]
+# snp.w.genes <- merge(gdm.annot.dt, snp.hit, by.x = "snp", by.y = "SNP")
+# snp.w.genes <- gdm.annot.dt[snp.hit, on = .(snp = SNP)]
+## Reporting SNP, effect allele, chromosome number and gene name
+snp.report <- snp.w.genes[,c("snp","allele","chrom","gene", "pos")]
+kable(snp.report, caption = "SNPs with a p-value < 0.0001") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+```{r}
+# Hit SNP rs12243326
+# Looking for genes that are within 1,000,000 of this SNP
+gene.loc <- snp.w.genes[snp == "rs12243326", pos] # location of snp
+# Finding indices of genes that are within 1,000,000 of this position
+gene.idx <- which(abs(gene.loc - gdm.annot.dt$pos) <= 1e6)
+# name(s) of the genes that are within a 1Mb window from the SNP rs12243326
+gene.within1Mb <- unique(gdm.annot.dt[gene.idx,gene])
+gene.1MB.window <- matrix(gene.within1Mb, dimnames = list(c(), c("Gene Name")))
+kable(gene.1MB.window, caption = "Genes within a 1Mb window of SNP rs12243326") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+```{r}
+# Hit SNP rs2237897
+# Looking for genes that are within 1,000,000 of this
+gene.loc <- snp.w.genes[snp == "rs2237897", pos] # location of snp
+# Finding indices of genes that are within 1,000,000 of this position
+gene.idx <- which(abs(gene.loc - gdm.annot.dt$pos) <= 1e6)
+# names of the genes that are within a 1Mb window from the SNP rs12243326
+gene.within1Mb <- unique(gdm.annot.dt[gene.idx, gene])
+gene.1MB.window <- matrix(gene.within1Mb, dimnames = list(c(), c("Gene Name")))
+kable(gene.1MB.window, caption = "Genes within a 1Mb window of SNP rs2237897") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+As can be expected, the genes that are directly related (same row as per `gdm.annot`) to that `SNP` are displayed. For `rs12243326`, it is seen that no other genes are within a $1$Mb range of that `SNP`. For `rs2237897` however, in addition to the `KCNQ1` gene that is directly related, there are also three other genes that are within a $1$Mb range of that `SNP`: `CACNA2D4`, `SMG6`, and `TH`.
+
+## Problem 2.e (8 points)
+
+-   Build a weighted genetic risk score that includes all `SNP`s with p-value $< 10^{-4}$, a score with all `SNP`s with p-value $< 10^{-3}$, and a score that only includes `SNP`s on the `FTO` gene
+-   ***Hint: ensure that the ordering of `SNP`s is respected***.
+-   Add the three scores as columns to the `gdm.dt` data table.
+-   Fit the three scores in separate logistic regression models to test their association with gestational diabetes.
+-   Report odds ratio, $95\%$ confidence interval and p-value using `kable()` for each score.
+
+```{r}
+snp.hit <- snp.hit %>%
+.[, pos := as.numeric(pos)] %>%
+.[, cum.pos := cumsum(pos)] %>%
+.[, chrom := as.numeric(chrom)]
+chrom.cols <- 1 + snp.hit$chrom %% 2 # 1 for even, 2 for odd chromosomes
+with(snp.hit, plot(cum.pos, -log10(p.value), col = chrom.cols, pch = 20,
+cex = 0.8, main = "Manhattan plot for SNP hit", xlab = "Positions", ylim = c(0,5)))
+abline(h = -log10(1e-4), lty = 2, col = "red")
+abline(h = -log10(1e-3), lty = 2, col = "black")
+```
+
+To visualise the GWAS, the Manhattan plot is presented below with the hit `SNP`s are highlighted. This assists in understanding the study results and how the `SNP` p-values are distributed across the chromosomes, with spikes in certain `SNP`s that are close in position and have a higher chance of being transmitted together. We have plotted the $-\log(p-values)$ for each `SNP` with a threshold line at $-\log(1e-4)$ to visualise the hits. We can see that some `SNP`s close to the hits on the chromosome are approaching “hit” status, but have not quite reached the threshold; which is an example of (not quite significant) linkage disequilibrium. Building weighted genetic risk scores for the different criteria will be performed.
+
+```{r}
+## Function to calculate risk scores, run regression, and store output
+weighted.risk <- function(snps.input.dt, criteria.name, data.set){
+## Subset data set by SNP of interest
+  data.set.grs <- data.set[, .SD, .SDcols = snps.input.dt$SNP]
+  ## Risk score weighted by regression coefficient
+
+  weighted.score <- as.vector(as.matrix(data.set.grs) %*%
+  snps.input.dt$coefficients)
+  ## Add score columns to original data set
+  data.set <- cbind(data.set, weighted.score = weighted.score)
+  ## Logistic regression model and output, with CI
+  mod.weighted <- glm(pheno ~ weighted.score, 
+                    data=data.set, family="binomial")
+  model.sum <- coef(summary(mod.weighted))
+  ci.95 <- exp(confint(mod.weighted))[2,]
+  output <- data.table(exp(model.sum[2,1]), ci.95[1], ci.95[2], model.sum[2,4])
+  output <- cbind(criteria.name,output)
+  setnames(data.set, "weighted.score", criteria.name)
+  return(list(output = output, 
+              data.set = data.set, 
+              mod.weighted = mod.weighted))
+}
+```
+
+```{r}
+## Names of SNPs with pvalue < 1e-4, <1e-3 and SNPs with allele on FTO gene
+snp.grs.e4 <- new.gdm.dt[p.value < 1e-4]
+snp.grs.e3 <- new.gdm.dt[p.value < 1e-3]
+snp.grs.fto <- snp.hit[gene %in% "FTO"]
+## Run function for all three criteria
+suppressMessages(invisible({
+gdm.dt.imputed.score <- copy(gdm.dt.imputed)
+e4 <- weighted.risk(snp.grs.e4, "p-value 1e-4", gdm.dt.imputed.score)
+gdm.dt.imputed.score <- e4[[2]]
+e3 <- weighted.risk(snp.grs.e3, "p-value 1e-3", gdm.dt.imputed.score)
+gdm.dt.imputed.score <- e3[[2]]
+fto <- weighted.risk(snp.grs.fto, "FTO gene", gdm.dt.imputed.score)
+gdm.dt.imputed.score <- fto[[2]]
+}))
+## Combine information into table
+weighted.risk.table <- rbind(e4[[1]], e3[[1]], fto[[1]])
+colnames(weighted.risk.table) <- c("Criteria Group","Odds Ratio", 
+                                    "95% lower","95% Upper","p.value")
+weighted.risk.table$p.value <- format(weighted.risk.table$p.value, digits = 4, nsmall = 0)
+kable(weighted.risk.table, digits=3,
+      caption = "Weighted Genetic Risk Score Model by Criteria") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+
+## Problem 2.f (4 points)
+
+-   File `GDM.test.txt` (available from the accompanying zip folder on Learn) contains genotypes of another $40$ pregnant women with and without gestational diabetes (assume that the reference allele is the same one that was specified in file `GDM.raw.txt`).
+-   Read the file into variable `gdm.test`.
+-   For the set of patients in `gdm.test`, compute the three genetic risk scores as defined in **problem 2.e** using the same set of `SNP`s and corresponding weights.
+-   Add the three scores as columns to `gdm.test` ***(hint: use the same columnnames as before).***
+
+```{r}
+gdm.test.dt <- fread("data_assignment2/GDM.test.txt")
+
+colnames(gdm.test.dt) <- colnames(gdm.dt)
+## Apply weighted risk function to new test set, and add to gdm.test.dt
+suppressMessages(invisible({
+  e4.test <- weighted.risk(snp.grs.e4, "p.value 1e-4", gdm.test.dt)
+  gdm.test.dt <- e4.test[[2]]
+  e3.test <- weighted.risk(snp.grs.e3, "p.value 1e-3", gdm.test.dt)
+  gdm.test.dt <- e3.test[[2]]
+  fto.test <- weighted.risk(snp.grs.fto, "FTO Gene", gdm.test.dt)
+  gdm.test.dt <- fto.test[[2]]
+}))
+
+weighted.risk.table.test <- rbind(e4.test[[1]], e3.test[[1]], fto.test[[1]])
+colnames(weighted.risk.table.test) <- c("Criteria Group","Odds Ratio", 
+                                    "95% lower","95% Upper","p.value")
+weighted.risk.table.test$p.value <- format(weighted.risk.table.test$p.value, 
+                                            digits = 4, nsmall = 0)
+kable(weighted.risk.table.test, digits=3,
+      caption = "Weighted Genetic Risk Score Test Model by Criteria") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+For sake of ease, we first write a function, `weight.risk()` that will provide a model summary in the form asked for (odds ratios, CIs and p-values). We then build a model for each weighted genetic risk score, and collect the results of this using that function. These are then row binded together to provide a table summary as above. 
+
+When calculating weighted scores for all `SNP`s with p-values less than $1e-4$ or $1e-3$, its interesting to see that you get highly significant odds ratios. Results suggest that weighted scores for SNPs with p-values less than $1e-4$ have an odds ratio point estimate of $2.729$, suggesting women with all of these `SNP`s have a $172.9\%$ higher odds ratio of getting gestational diabetes than not. This ranges between $92.4\%$ and $291.1\%$ across the $95\%$ confidence interval. Likewise for `SNP`s with p-values less than $1e-3$, there is a $45.2\%$ higher odds ratio of getting gestational diabetes than not. Conversely, for the weighted score for `SNP`s on the `FTO` gene you get a p-value of $0.215$. Given the confidence interval for the odds-ratio spans over $1$, ($0.819-2.453$), there is no statistical evidence to suggest that the odds-ratio differs from $1$, which is when there is an even odds-ratio of having gestational diabetes than not.
+
+## Problem 2.g (4 points)
+
+-   Use the logistic regression models fitted in **problem 2.e** to predict the outcome of patients in `gdm.test`.
+-   Compute the test log-likelihood for the predicted probabilities from the three genetic risk score models.
+
+```{r}
+## Isolate the model objects that were output from the function
+e4.mod <- e4[[3]]
+e3.mod <- e3[[3]]
+fto.mod <- fto[[3]]
+## Predict patient outcomes for the test data, using the models for the weighted risk
+test.data.e4 <- data.frame(weighted.score = gdm.test.dt$`p.value 1e-4`)
+pred.e4.mod <- predict(e4.mod, newdata = test.data.e4, type = "response")
+test.data.e3 <- data.frame(weighted.score = gdm.test.dt$`p.value 1e-3`)
+pred.e3.mod <- predict(e3.mod, newdata = test.data.e3, type = "response")
+test.data.fto <- data.frame(weighted.score = gdm.test.dt$`FTO Gene`)
+pred.fto.mod <- predict(fto.mod, newdata = test.data.fto, type = "response")
+## Predictions into table format
+pred.table.test <- cbind(gdm.test.dt$ID, pred.e4.mod, pred.e3.mod, pred.fto.mod)
+colnames(pred.table.test) <- c("Patient","p.value 1e-4","p.value 1e-3","FTO Gene")
+
+kable(head(pred.table.test), caption = "Log-likelihoods for Predicted Probabilities") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+```{r}
+## Compute test log-likelihoods
+e4.log.lik <- sum(dbinom(gdm.test.dt$pheno, prob=pred.e4.mod, size=1, log=TRUE))
+e3.log.lik <- sum(dbinom(gdm.test.dt$pheno, prob=pred.e3.mod, size=1, log=TRUE))
+fto.log.lik <- sum(dbinom(gdm.test.dt$pheno, prob=pred.fto.mod, size=1, log=TRUE))
+## Combine into table
+log.lik.table <- cbind(e4.log.lik, e3.log.lik, fto.log.lik)
+colnames(log.lik.table) <- c("P-Value 10ˆ-4","P-Value 10ˆ-3","FTO Gene")
+kable(log.lik.table, caption = "Log-likelihoods for Predicted Probabilities") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+Comparison of the models based on log-likelihoods indicates that the weighted risk score model under the $40$ criteria of p-value $< 1e-3$ is a better fit to the data set, since a higher value indicates a generally better model fit. Additional predictors in a model will almost always increase the log-likelihood, however this is not an issue here since all three models are based on the weighted genetic risk score variable.
+
+Given we have a binary outcome, our outcome variable can be modelled as a Bernoulli distribution with probabilities equivalent to our predicted test values (as these range between 0 and 1 and reflect the risk of having gestational diabetes). To calculate our log-likelihood values, we could either calculate this manually using the Bernoulli distributions probability mass function and calculating the likelihood and corresponding log-likelihood functions, or alternatively we can pass this through the `dbinom` function in `R` with a size of $1$. By setting log=TRUE, we are telling `R` that we want this to be on the log scale.
+
+By looking at all log-likelihoods across all predictions, can see that the model with SNPs with p-values less than 10ˆ{-3} performs best, given this has the largest log-likelihood out of all the models. A high log-likelihood suggests a better fit of the model to the data, which in this case reflects good predictive performance.
+
+## Problem 2.h (4points)
+
+-   File `GDM.study2.txt` (available from the accompanying zip folder on Learn) contains the summary statistics from a different study on the same set of `SNP`s.
+-   Perform a meta-analysis with the results obtained in **problem 2.c** ***(hint: remember that the effect alleles should correspond)*** - produce a summary of the meta-analysis results for the set of `SNP`s with meta-analysis p-value $< 10^{-4}$ sorted by increasing p-value.
+
+```{r}
+gdm2.dt <- fread("data_assignment2/GDM.study2.txt")
+
+# all SNP identifiers are the same
+# Creating new columns in gdm2.dt which is snp with effect allele
+gdm2.dt[, SNP := paste(snp, effect.allele, sep = "_")]
+# Check if both studies contain the same SNP with alleles (only effect)
+match.snp.gdm <- gdm2.dt$SNP %in% new.gdm.dt$SNP
+match.snp.origin <- new.gdm.dt$SNP %in% gdm2.dt$SNP
+sum.match.gdm <- sum(match.snp.gdm)
+sum.match.origin <- sum(match.snp.origin)
+```
+
+```{r}
+## Only keep SNPs which match across both studies (effect allele)
+gdm2.dt.meta <- gdm2.dt[match.snp.gdm]
+snp.model.meta <- new.gdm.dt[match.snp.origin]
+## Add new column with study names
+snp.model.meta$study <- "Original Study"
+gdm2.dt.meta$study <- "GDM Study"
+## Calculate p-values for gdm.dt data
+gdm2.dt.meta[, p.value := pnorm(-abs(beta)/se)*2]
+## Only obtain SNPs with p-values < 10ˆ{-4} for original model results
+high.sig.snp.results <- snp.model.meta[p.value < 1e-04,]
+## Only wanting to keep Study, SNPName, SNPCoef, StandardError, and pvalue
+high.sig.snp.results <- high.sig.snp.results[, c("study","SNP", "coefficients",
+                                                "std.error","p.value")]
+## Only obtain SNPs with p-values < 10ˆ{-4} for original model results
+high.sig.gdm.results <- gdm2.dt.meta[p.value < 1e-04,]
+## Only wanting to keep Study, SNPName, beta, se, and pvalue
+high.sig.gdm.results <- high.sig.gdm.results[, c("study","SNP", 
+                                                "beta","se", "p.value")]
+
+## Columns are in all the same position, binding significant results together
+sig.results <- rbind(high.sig.snp.results, high.sig.gdm.results, use.names=FALSE)
+## Making sure results for SNPs are easily comparable
+setorder(sig.results, SNP)
+sig.results$p.value <- format(sig.results$p.value, digits = 4, nsmall = 0)
+kable(sig.results,
+caption = "Summary of meta-analysis results for SNPs with p-values $<1e-4$") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+\newpage
+
+# Problem 3 (33 points)
+
+File `nki.csv` (available from the accompanying zip folder on Learn) contains data for $144$ breast cancer patients. The dataset contains a binary outcome variable (`Event`, indicating the insurgence of further complications after operation), covariates describing the tumour and the age of the patient, and gene expressions for $70$ genes found to be prognostic of survival.
+
+## Problem 3.a (6 points)
+
+-   Compute the correlation matrix between the gene expression variables, and display it so that a block structure is highlighted using the `corrplot` package.
+-   Discuss what you observe.
+-   Identify the unique pairs of (distinct) variables that have correlation coefficient greater than $0.80$ in absolute value and report their correlation coefficients.
+
+```{r fig.height = 14, fig.width = 15}
+cancer.dt <- fread("data_assignment2/nki.csv")
+## Identify factor variables and factor outcome
+factor.vars <- c("Event", "Diam", "LymphNodes", "EstrogenReceptor","Grade")
+cancer.dt[, (factor.vars) := lapply(.SD, function(x) as.factor(x)),
+          .SDcols = factor.vars]
+## Isolate gene names and find correlations
+gene.cols <- colnames(cancer.dt[,-c(1:6)])
+cor.cancer <- cancer.dt[, ..gene.cols] %>% #subset of numeric columns
+                cor(use="pairwise.complete")
+## Highlight block structure by ordering into correlation clusters
+corrplot(cor.cancer, order = "hclust", diag = FALSE, 
+          tl.col = "black", tl.cex = 0.5, mar = c(1,1,1,1), type = 'upper',
+          title = "Correlation matrix (ordered by hierarchical clustering)")
+```
+
+```{r}
+## Set upper triangular part of matrix to NA and disregard (incl. diagonal)
+cor.cancer.high <- cor.cancer
+cor.cancer.high[lower.tri(cor.cancer.high)] <- NA
+diag(cor.cancer.high) <- NA
+
+## Select correlations with abs value greater than 0.8 and set names
+high.corr <- subset(as.data.frame.table(cor.cancer.high), abs(Freq) > 0.8)
+rownames(high.corr) <- NULL
+colnames(high.corr) <- c("Covariate 1","Covariate 2", "Correlation Coefficient")
+kable(high.corr,  digits = 3, caption = "Unique Pairs with High Correlation") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+From the correlation plot above, it can be seen that there are strong correlations between certain gene expressions. The clusters of blue indicate concentrations of highly positively correlated genes, while the clusters of red indicate concentrations of negatively correlated genes. During principal component analysis (PCA), this large set of correlated variables will be summarized into smaller axes of variation. In the analysis below, it is found that there are seven distinct pairs of variables that have a very high positive correlations, above $0.8$. No variable pairs were found to have a very strong negative correlation, $-0.8$.
+
+## Problem 3.b (8 points)
+
+-   Perform PCA analysis (only over the columns containing gene expressions) in order to derive a patient-wise summary of all gene expressions (dimensionality reduction).
+-   Decide which components to keep and justify your decision.
+-   Test if those principal components are associated with the outcome in unadjusted logistic regression models and in models adjusted for `age`, `estrogen receptor` and `grade`.
+-   Justify the difference in results between unadjusted and adjusted models.
+
+```{r}
+## Run PCA on numeric covariate columns for gene expressions
+pca.vars <- prcomp(cancer.dt[, ..gene.cols], center = T, scale = T)
+summary(pca.vars)
+```
+
+```{r, fig.width = 15, fig.height = 10}
+## Scree Plot for each Principal Component
+fviz_eig(pca.vars, addlabels = TRUE, ncp = 30)
+```
+The PCA process has resulted in $70$ principal components, in order of highest standard deviation to lowest. A scree plot is used to visualize the variance explained by the principal components. The scree plot indicates that after $6^{th}$ variable, the curve begins to flatten but not drastically. More variation can be captured by including more components and the cut-off is not very distinct.
+
+To assist in deciding which principal components to include in the model, the variability captured by the components is assessed. In order to have $80\%$ of the variability, $22$ principal components would need to be included in the model. While this is a rather complex model, including less than 10 components would result in only $60\%$ of the variability being captured.
+
+```{r}
+## Compute amount of variability of components - sqrt of eigenvalues stored in sdev
+sdev <- pca.vars$sdev^2
+perc.expl <- sdev / sum(sdev)
+## Calculate number of components needed to capture 80% of the variability
+variability <- data.frame(variability = sort(perc.expl, decreasing=TRUE))
+variability$cumulative <- cumsum(variability$variability)
+num.comp.var.80 <- which.min(abs(variability$cumulative - 0.8))
+num.comp.var.70 <- which.min(abs(variability$cumulative - 0.7))
+num.comp.var.60 <- which.min(abs(variability$cumulative - 0.6))
+num.comp.var.1se <- which.min(abs(pca.vars$sdev-1.0))
+var.capture <- data.table("no. PCs",num.comp.var.80, num.comp.var.70, 
+                          num.comp.var.60, num.comp.var.1se)
+colnames(var.capture) <- c("","80%", "70%", "60%", "1 std.error")
+kable(var.capture, caption = "Number of principal components needed for explainability") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+```{r}
+## Select number of PCs to be checked in glm models
+pca.for.model. <- pca.vars$x[, 1:num.comp.var.1se]
+pca.for.model <- colnames(pca.for.model.)
+## Check each PC for significance in a glm models
+adj.sig.pc <- unadj.sig.pc <- c()
+for (i in pca.for.model){
+  unadj.log.model <- glm(Event ~ pca.vars$x[,i], data = cancer.dt, family="binomial")
+  unadj.p.value <- coef(summary(unadj.log.model))[2,4]
+  if(unadj.p.value < 0.05){
+    unadj.sig.pc <- c(unadj.sig.pc, "Significant")
+  }
+  else{
+    unadj.sig.pc <- c(unadj.sig.pc, "Insignificant")
+  }
+  adj.log.model <- glm(Event ~ pca.vars$x[,i] + Age + EstrogenReceptor + Grade,
+                          data = cancer.dt, family="binomial")
+  adj.p.value <- coef(summary(adj.log.model))[2,4]
+  if(adj.p.value < 0.05){
+    adj.sig.pc <- c(adj.sig.pc, "Significant")
+  }
+  else{
+    adj.sig.pc <- c(adj.sig.pc, "Insignificant")
+  }
+}
+sig.pc <- data.table(colnames(pca.for.model.), adj.sig.pc, unadj.sig.pc)
+colnames(sig.pc) <- c("PCs", "Adjusted", "Unadjusted")
+kable(list(sig.pc[1:9,], sig.pc[10:18,]),booktabs = TRUE,
+  caption = "Significant PCs from Unadjusted and Adjusted Model") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+```{r}
+## Overall regression on PCs
+unadj.log.model <- glm(Event ~ pca.for.model., data = cancer.dt, family="binomial")
+summary(unadj.log.model)
+
+adj.log.model <- glm(Event ~ pca.for.model. + Age + EstrogenReceptor + Grade,
+                      data = cancer.dt, family="binomial")
+summary(adj.log.model)
+```
+
+```{r}
+## Perform likelihood ratio test
+p.value <- pchisq(unadj.log.model$deviance - adj.log.model$deviance, 
+                    df = 4, lower.tail=FALSE)
+cat("Likelihood ratio test p-value:", p.value, "\n")
+## Confirm likelihood ratio test
+lrtest(unadj.log.model, adj.log.model)
+```
+
+Regression is run on the individual components to determine which of the $18$ are significant in association with breast cancer patients having a post-surgery event. Each component is run in a unadjusted logistic regression model, and an adjusted model that includes the additional variables of `age`, `estrogen receptor`, and `grade`.
+
+When run individually, the unadjusted regression models indicate that principal components PC $1$, PC $3$, PC $11$ and PC $17$ are all significant. The results for the adjusted model are different from the unadjusted model because the additional parameters of `age`, `estrogen receptor`, and `grade` affect the model, increasing the PC p-values. Overall regression model fits with the $18$ principal components produce slightly different results, indicating that PC $17$ is also significant.
+
+A likelihood ratio test can be performed on these two nested modesl. This test is performed by calculating the difference in deviances of the two models, which follows a $\chi^2$-distribution with degrees of freedom equal to the difference in number of parameters, four in this case since grade has three levels. With a p-value of $0.376$, the results of likelihood ratio test show that there is not evidence to add the additional parameters for the adjusted model. Therefore this further suggests that the addition of these parameters is diluting the model, making it more complex and affecting the significance of the principal component covariates.
+
+## Problem 3.c (8 points)
+
+-   Use PCA plots to compare the main drivers with the correlation structure observed in **problem 3.a**.
+-   Examine how well the dataset may explain your outcome.
+-   Discuss your findings in full details and suggest any further steps if needed.
+
+```{r fig.width = 12}
+axes <- c(1,2)
+p1 <- fviz_pca_ind(pca.vars, geom='point', axes = axes,
+habillage = cancer.dt$Event,
+addEllipses = T)
+p2 <- fviz_pca_biplot(pca.vars, geom='point', repel = T,axes = axes)
+plot <- ggpubr::ggarrange(p1,p2)
+annotate_figure(plot, top = text_grob("Comparison between PC1 and PC2", 
+               color = "black", face = "bold", size = 20))
+```
+
+```{r fig.width = 12}
+axes <- c(1,3)
+p1 <- fviz_pca_ind(pca.vars, geom='point', axes = axes,
+habillage = cancer.dt$Event,
+addEllipses = T)
+p2 <- fviz_pca_biplot(pca.vars, geom='point', repel = T,axes = axes)
+plot <- ggpubr::ggarrange(p1,p2)
+annotate_figure(plot, top = text_grob("Comparison between PC1 and PC3", 
+               color = "black", face = "bold", size = 20))
+```
+
+```{r fig.width = 12}
+axes <- c(3,11)
+p1 <- fviz_pca_ind(pca.vars, geom='point', axes = axes,
+habillage = cancer.dt$Event,
+addEllipses = T)
+p2 <- fviz_pca_biplot(pca.vars, geom='point', repel = T,axes = axes)
+plot <- ggpubr::ggarrange(p1,p2)
+annotate_figure(plot, top = text_grob("Comparison between PC3 and PC11", 
+               color = "black", face = "bold", size = 20))
+```
+
+```{r fig.width = 12}
+axes <- c(11,17)
+p1 <- fviz_pca_ind(pca.vars, geom='point', axes = axes,
+habillage = cancer.dt$Event,
+addEllipses = T)
+p2 <- fviz_pca_biplot(pca.vars, geom='point', repel = T,axes = axes)
+plot <- ggpubr::ggarrange(p1,p2)
+annotate_figure(plot, top = text_grob("Comparison between PC11 and PC17", 
+               color = "black", face = "bold", size = 20))
+```
+Plotting two principal components against each other can help identify how well they separate the data from having an event after surgery or not having an event. The data points of the outcomes are shown below, against a selection of two principal components. The ellipses of $0$ and $1$ show the outcome of an event occurring, and contain $95\%$ of the data in each group, with the centroid of the group shown as an enlarged data point.
+
+In this data set, there are many variables that are associated with the outcome, hence the large number of principal components needed to capture the variability. However, it can be seen that there is still quite a bit of separating power in a few PCA components, evidenced by the separation between the ellipses in the plots below. Different combinations of principal components provide different separation power, and plots with overlapping ellipses indicate that the two components are not capturing different variation, thus including both in a model is probably not optimal.
+
+The first two components contain the largest variation in the data, and PC $1$ and PC $2$ show quite a bit of distinction in the ellipses. However, examination of the biplot (which shows the linear combinations of the components) reveals that the magnitude of the variable arrows is greater along the x-axis, indicating that PC $1$ is assigning more weight to these variables. The magnitude of the variable arrows along the y-axis appears to be lower, meaning that PC $2$ is assigning less weight to these variables and is capturing less of the variability, which aligns with what was observed from the unadjusted regression model, as PC $2$ shows as not significant in the model. 
+
+As can be expected, variables that were found to be highly correlated with each other are closely aligned in the biplot, since the principal components are the eigenvectors of the variance-covariance matrix of the the predictor variables. For example, the similar direction and magnitude of `CENPA` and `PRC1`, which have a correlation of $0.818$, can be observed in the biplot for PC $1$ and PC $2$.
+
+Since it appears the significant principal components from the model capture more of the variability, then example plots of these components against each other can be useful in evaluating how the gene expression data is explaining the outcome of event. Example comparisons of PC $1$, PC $3$, PC $11$, and PC $17$ are plotted against each other below.
+
+In comparison of PC $1$ and PC $3$ above, the very strong correlation between `IGFBP5` and `IGFB5.1` of $0.978$ can be seen, as the linear combinations for these variables are almost completely aligned. Similarly for the strong correlation between `PECI` and `PECI.1` as well. There is less overlap in the ellipses, indicating the separation power of these components is stronger.
+
+For the significant PCA components from the regression models, since their overall variation is lower than the earlier components (since they are ordered by the size of their eigenvalues), it can be seen that the ellipses are not as distinct. PC $11$ and PC $17$ below appear to be capturing similar variation in the data, and the magnitude of their variable arrows is quite a bit lower than earlier components.
+
+From the different plots, it is observed that they generally follow what was observed in the correlation plot, which is expected since the PCA components are the eigenvectors of the variance-covariance matrix of the the predictor variables.
+
+This process helps to see the importance of covariate selection and reduction of highly correlated variables in a model. Additionally, it may be helpful to remove some variables that are not correlated with the outcome, before performing PCA. It is important to note that no data cleaning, outlier analysis, or examination of the errors has been performed, which would normally be part of the process. 
+
+When observing the plots of these components, it appears the explanatory variables of this data set do provide some separation power and ability to explain the outcome. Since the ellipses overlap quite significantly for some components, the explanatory power is not perfect. However, building models on this data set may be able to provide predictive power for the outcome.
+
+## Problem 3.d (11 points)
+
+-   Based on the models we examined in the labs, fit an appropriate model with the aim to provide the most accurate prognosis you can for patients.
+-   Discuss and justify your decisions with several experiments and evidences.
+
+```{r}
+## Create the training data 70-30 split
+set.seed(984065)
+train.idx <-createDataPartition(cancer.dt$Event, p=0.7)$Resample1
+## Split into train and test subsets
+cancer_train.dt <- cancer.dt[train.idx,]
+cancer_test.dt <- cancer.dt[!train.idx,]
+## Store the outcome and the covariates separately
+y_cancer_train.dt <- cancer_train.dt$Event
+x_cancer_train.dt <- model.matrix(Event ~ .,cancer_train.dt)
+y_cancer_test.dt <- cancer_test.dt$Event
+x_cancer_test.dt <- model.matrix(Event ~ .,cancer_test.dt)
+```
+
+### Lasso \& Ridge Regression Models.
+
+```{r fig.width = 15, fig.height = 14}
+## Fit lasso and ridge models
+fit.cv.lasso <- cv.glmnet(x_cancer_train.dt, y_cancer_train.dt, family = "binomial",
+type.measure = "auc", alpha = 1)
+fit.cv.ridge <- cv.glmnet(x_cancer_train.dt, y_cancer_train.dt, family = "binomial",
+type.measure = "auc", alpha = 0)
+## Plot the cross-validation curves
+par(mfrow=c(1,2), mar=c(4,4,5,2))
+plot(fit.cv.lasso, main="Lasso")
+plot(fit.cv.ridge, main="Ridge")
+
+## Find indices of lambdas that maximizes AUC
+idx_lasso.min <- fit.cv.lasso$index["min",]
+idx_ridge.min <- fit.cv.ridge$index["min",]
+
+## Reporting model size of each regression
+modelsize <- data.table("Model Size",
+                        fit.cv.lasso$nzero[idx_lasso.min], 
+                        fit.cv.ridge$nzero[idx_ridge.min])
+colnames(modelsize) <- c("","Lasso", "Ridge")
+kable(modelsize,
+  caption = "Model Size of Lasso and Ridge Regression") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+The model size for a ridge regression model requires all $76$ covariates for maximum AUC, and this is a complex and undesirable model. Lasso regression only requires $24$ covariates, which is the more suitable model, out of these two options.
+
+### Logistic Regression
+
+To build a regular logistic regression model for this data, it is difficult due to the fact that the data set contains $75$ covariates and only $144$ observations. Even backwards elimination and forward selection are not feasible options for covariate selection, as the algorithms will not converge. Therefore it is evident that dimensionality reduction may help in building this model.
+
+### Principal Component Analysis
+
+To reduce the dimensions of this data set, PCA is performed on the gene expression covariates of the training data.
+
+```{r}
+## Run PCA on numeric covariate columns for gene expressions
+pca.vars <- prcomp(cancer_train.dt[, ..gene.cols], center = T, scale = T)
+summary(pca.vars)
+
+## Compute amount of variability of components - sqrt of eigenvalues stored in sdev
+sdev <- pca.vars$sdev^2
+perc.expl <- sdev / sum(sdev)
+## Calculate number of components needed to capture 80% of the variability
+variability <- data.frame(variability = sort(perc.expl, decreasing=TRUE))
+variability$cumulative <- cumsum(variability$variability)
+num.comp.var.80 <- which.min(abs(variability$cumulative-0.8))
+num.comp.var.70 <- which.min(abs(variability$cumulative-0.7))
+num.comp.var.60 <- which.min(abs(variability$cumulative-0.6))
+num.comp.var.1se <- which.min(abs(pca.vars$sdev-1.0))
+var.capture <- data.table("no. PCs",num.comp.var.80, num.comp.var.70, 
+                          num.comp.var.60, num.comp.var.1se)
+colnames(var.capture) <- c("","80%", "70%", "60%", "1 std.error")
+kable(var.capture, caption = "Number of principal components needed for explainability") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+```{r}
+## New data set of PC and factor variables
+PCA_train_data.dt <- data.table(cancer_train.dt[,c("Event","Diam",
+"LymphNodes","EstrogenReceptor","Grade","Age")],pca.vars$x[,1:19])
+## Generate PCs for test set data
+cancer_test.PCA.dt <- predict(pca.vars, newdata = cancer_test.dt[, ..gene.cols])[,1:19]
+PCA_x_test_data.dt <- data.table(cancer_test.dt[,c("Event","Diam",
+"LymphNodes","EstrogenReceptor","Grade","Age")],cancer_test.PCA.dt)
+mod_matrix_PCA_test_data.dt <- model.matrix(Event ~ .,PCA_x_test_data.dt)
+## Store the outcome and the covariates separately
+y_PCA_train_data.dt <- PCA_train_data.dt$Event
+x_PCA_train_data.dt <- PCA_train_data.dt[,!"Event"]
+mod_matrix_PCA_train_data.dt <- model.matrix(Event ~ .,PCA_train_data.dt)
+```
+
+Of the $70$ principal components for the training set data, it is seen below that $80\%$ of the variability can be captured with $20$ components, and $19$ components can explain one standard deviation of the data. In this case, 19 components are selected to use in model construction. A new data set with the principal components for the gene expressions is built, with the categorical variables of `lymph nodes`, `diameter`, `age`, `estrogen receptor`, and `grade` also included.
+
+```{r}
+## Full PCA logistic regression
+model.PCA <- glm(Event ~ ., data = PCA_train_data.dt, family="binomial")
+summary(model.PCA)
+
+## Backward stepwise selection
+full.model <- glm(Event ~ ., data = PCA_train_data.dt, family = "binomial")
+model.B.PCA <- stepAIC(full.model, direction="back", trace = FALSE)
+summary(model.B.PCA)
+
+## Forward stepwise selection
+null.model <- glm(Event ~ 1, data = PCA_train_data.dt, family = "binomial")
+model.S.PCA <- stepAIC(null.model, scope = list(upper=full.model), 
+                        trace = FALSE, direction = "forward")
+summary(model.S.PCA)
+```
+
+```{r fig.width = 15, fig.height = 8}
+## Fit lasso and ridge models on PCA data
+fit.cv.lasso.PCA <- cv.glmnet(mod_matrix_PCA_train_data.dt, y_PCA_train_data.dt,
+family = "binomial", type.measure = "auc", alpha = 1)
+fit.cv.ridge.PCA <- cv.glmnet(mod_matrix_PCA_train_data.dt, y_PCA_train_data.dt,
+family = "binomial", type.measure = "auc", alpha = 0)
+## Plot the cross-validation curves
+par(mfrow=c(1,2), mar=c(4,4,5,2))
+plot(fit.cv.lasso.PCA, main="Lasso")
+plot(fit.cv.ridge.PCA, main="Ridge")
+
+## Find indices of lambdas that maximizes AUC
+idx_lasso.PCA.min <- fit.cv.lasso.PCA$index["min",]
+idx_ridge.PCA.min <- fit.cv.ridge.PCA$index["min",]
+
+## Reporting model size of each regression
+modelsize <- data.table("Model Size",
+                        fit.cv.lasso.PCA$nzero[idx_lasso.PCA.min], 
+                        fit.cv.ridge.PCA$nzero[idx_ridge.PCA.min])
+colnames(modelsize) <- c("","Lasso", "Ridge")
+kable(modelsize,
+  caption = "Model Size of Lasso and Ridge Regression") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+Running a full logistic regression shows that most variables are not significant. This model may not be optimal, and covariate selection can be aided by backwards elimination and forward selection. To select which components to keep for the best fit, backwards elimination and forward selection are performed. Although the two models were created through two different methods, both selection processes have produced the exact same model. Therefore analysis can continue with a model titled “Logistic regression PCA” to represent the model selected by both backwards elimination and forward selection. The PCA data set is also used to fit lasso and ridge regression models. With the dimensionality reduction, it is still found that ridge regression is using all possible covariates, where lasso produces a maximum AUC fit with $19$ covariates.
+
+### Training Set Model Accuracy
+
+```{r}
+## Data frame of actual data observations for the outcome in train set,
+## and predicted outcome from the model, compare predictive ability
+## Lasso train prediction
+suppressMessages(invisible({
+  pred_model.lasso <- data.frame(obs = cancer_train.dt$Event,
+                        pred = predict(fit.cv.lasso, s = fit.cv.lasso$lambda.min, 
+                        newx = x_cancer_train.dt, type = "response"))
+  auc_model.lasso <- roc(obs ~ s1, data = pred_model.lasso)$auc
+  ## Ridge train prediction
+  pred_model.ridge <- data.frame(obs = cancer_train.dt$Event,
+                        pred = predict(fit.cv.ridge, s = fit.cv.ridge$lambda.min, 
+                        newx = x_cancer_train.dt, type = "response"))
+  auc_model.ridge <- roc(obs ~ s1, data = pred_model.ridge)$auc
+  ## Logistic regression PCA train prediction
+  pred_model.B.PCA <- data.frame(obs = cancer_train.dt$Event,
+                        pred = predict(model.B.PCA, newdata = x_PCA_train_data.dt, 
+                        type = "response"))
+  auc_model.B.PCA <- roc(obs ~ pred, data = pred_model.B.PCA)$auc
+  ## Lasso PCA train prediction
+  pred_model.lasso.PCA <- data.frame(obs = cancer_train.dt$Event,
+                        pred = predict(fit.cv.lasso.PCA, s = fit.cv.lasso.PCA$lambda.min, 
+                        newx = mod_matrix_PCA_train_data.dt, type = "response"))
+  auc_model.lasso.PCA <- roc(obs ~ s1, data = pred_model.lasso.PCA)$auc
+  ## Ridge PCA train prediction
+  pred_model.ridge.PCA <- data.frame(obs = cancer_train.dt$Event,
+                        pred = predict(fit.cv.ridge.PCA, s = fit.cv.ridge.PCA$lambda.min, 
+                        newx = mod_matrix_PCA_train_data.dt, type = "response"))
+  auc_model.ridge.PCA <- roc(obs ~ s1, data = pred_model.ridge.PCA)$auc
+}))
+```
+
+To evaluate the accuracy of each model on the training data, the model is used to predict the training set outcomes, and compared to the actual outcomes. The training AUC values are calculated, which represents how well each model predicts true positives and true negatives, and will be presented in an overall comparison in the upcoming section.
+
+### Final Predictive Accuracy Comparison
+
+```{r}
+suppressMessages(invisible({
+  ## Lasso test prediction
+  test_pred_model.lasso <- data.frame(obs = cancer_test.dt$Event,
+                    pred = predict(fit.cv.lasso, s = fit.cv.lasso$lambda.min,
+                    newx = x_cancer_test.dt, type = "response"))
+  test_auc_model.lasso <- roc(obs ~ s1, data = test_pred_model.lasso)$auc
+  ## Ridge test prediction
+  test_pred_model.ridge <- data.frame(obs = cancer_test.dt$Event,
+                    pred = predict(fit.cv.ridge, s = fit.cv.ridge$lambda.min, 
+                    newx = x_cancer_test.dt, type = "response"))
+  test_auc_model.ridge <- roc(obs ~ s1, data = test_pred_model.ridge)$auc
+  ## Logistic regression PCA test prediction
+  test_pred_model.B.PCA <- data.frame(obs = cancer_test.dt$Event,
+                    pred = predict(model.B.PCA, newdata = PCA_x_test_data.dt, 
+                    type = "response"))
+  test_auc_model.B.PCA <- roc(obs ~ pred, data = test_pred_model.B.PCA)$auc
+  ## Lasso PCA test prediction
+  test_pred_model.lasso.PCA <- data.frame(obs = cancer_test.dt$Event,
+                    pred = predict(fit.cv.lasso.PCA, s = fit.cv.lasso.PCA$lambda.min, 
+                    newx = mod_matrix_PCA_test_data.dt, type = "response"))
+  test_auc_model.lasso.PCA <- roc(obs ~ s1, data = test_pred_model.lasso.PCA)$auc
+  ## Ridge PCA test prediction
+  test_pred_model.ridge.PCA <- data.frame(obs = cancer_test.dt$Event,
+                    pred = predict(fit.cv.ridge.PCA, s = fit.cv.ridge.PCA$lambda.min, 
+                    newx = mod_matrix_PCA_test_data.dt, type = "response"))
+  test_auc_model.ridge.PCA <- roc(obs ~ s1, data = test_pred_model.ridge.PCA)$auc
+  }))
+```
+
+```{r}
+## Plot ROC curve for all models
+par(mfrow=c(1,1))
+suppressMessages(invisible({
+  roc(cancer_test.dt$Event, test_pred_model.lasso$s1, plot = TRUE, lwd = 3, 
+      xlim = c(0,1), col="red", main="ROC for Test Set")
+  plot.roc(cancer_test.dt$Event, test_pred_model.ridge$s1, add = TRUE, 
+            lwd = 3, col="blue", xlim = c(0,1))
+  plot.roc(cancer_test.dt$Event, test_pred_model.B.PCA$pred, add = TRUE, 
+            lwd = 3, col="green", xlim = c(0,1))
+  plot.roc(cancer_test.dt$Event, test_pred_model.lasso.PCA$s1, add = TRUE, 
+            lwd = 3, col="yellow", xlim = c(0,1))
+  plot.roc(cancer_test.dt$Event, test_pred_model.ridge.PCA$s1, add = TRUE, 
+            lwd = 3, col="purple", xlim = c(0,1))
+}))
+legend("bottomleft", 
+        legend = c("Lasso", "Ridge", "PCA Logistic", "PCA Lasso","PCA Ridge"), 
+        col = c("red", "blue", "green", "yellow", "purple"), 
+        cex = .9, lty = 1, bty ="n")
+```
+
+```{r}
+## Create table of AUC values
+AUC_table <- data.table(
+c("Lasso regression","Ridge regression","PCA logistic regression",
+"PCA lasso regression","PCA ridge regression"),
+round(c(auc_model.lasso, auc_model.ridge, auc_model.B.PCA,
+auc_model.lasso.PCA, auc_model.ridge.PCA),3),
+round(c(test_auc_model.lasso, test_auc_model.ridge, test_auc_model.B.PCA,
+test_auc_model.lasso.PCA,test_auc_model.ridge.PCA),3))
+colnames(AUC_table) <- c("Model type", "Training AUC Value", "Test AUC Value")
+kable(AUC_table, caption = "AUC values for Training and Testing Sets") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+To compare the predictive accuracy of each model, the models are used to predict the outcome of the test set, which was not used to construct the models. These predictions are then compared against the actual test set values, and the AUC values compared in the table below. Both training and test AUC are reported, as the relationship between how the model fits both sets of data are important. Test set accuracy is most important, and high training set AUC values with low test set AUC values indicates overfitting may have occurrred which is not desirable in a model.
+
+It appears that the PCA logistic regression model has the best predictive ability, with a test AUC value of $0.778$ indicating that with this model there is a $77.8\%$ chance that it will correctly distinguish between “event” and “no event” based on the data.
+
+```{r}
+## Calculate confusion matrix objects for all models
+sens_model.lasso <- confusionMatrix(as.factor(test_pred_model.lasso$obs),
+                          as.factor(round(test_pred_model.lasso$s1,0)))
+sens_model.B.PCA <- confusionMatrix(as.factor(test_pred_model.B.PCA$obs),
+                          as.factor(round(test_pred_model.B.PCA$pred,0)))
+sens_model.lasso.PCA <- confusionMatrix(as.factor(test_pred_model.lasso.PCA$obs),
+                          as.factor(round(test_pred_model.lasso.PCA$s1,0)))
+sens_model.ridge.PCA <- confusionMatrix(as.factor(test_pred_model.ridge.PCA$obs), 
+                          as.factor(round(test_pred_model.ridge.PCA$s1,0)))
+sens_table <- data.table(c("Lasso regression","PCA logistic regression",
+                            "PCA lasso regression","PCA ridge regression"),
+                round(c(sens_model.lasso[[4]][1], sens_model.B.PCA[[4]][1],
+                      sens_model.lasso.PCA[[4]][1], sens_model.ridge.PCA[[4]][1]),3),
+                round(c(sens_model.lasso[[4]][2], sens_model.B.PCA[[4]][2],
+                      sens_model.lasso.PCA[[4]][2], sens_model.ridge.PCA[[4]][2]),3))
+colnames(sens_table) <- c("Model type", "Sensitivity","Specificity")
+kable(sens_table, caption = "Confusion Matrix") |>
+kable_styling(full_width = F, position = "center", latex_options = "hold_position")
+```
+
+As mentioned above, sensitivity is very important in this context, due to the damage that can be done if a true positive is not identified correctly. Sensitivity and specificity of the four best performing models is compared below. Ridge regression is excluded due to it being a very complex model and lacking performance compared to the others. With the highest sensitivity, the PCA logistic regression model is performing the best of all the models for predictive power for identifying patients who are associated with having a post-surgery event. Therefore this model would be recommended for use to assist in providing prognoses to patients.
