@@ -470,10 +470,12 @@ kable_styling(full_width = F, position = "center", latex_options = "hold_positio
 # Hit SNP rs12243326
 # Looking for genes that are within 1,000,000 of this SNP
 gene.loc <- snp.w.genes[snp == "rs12243326", pos] # location of snp
+gene.chrom <- snp.w.genes[snp == "rs12243326", chrom] # Chromosome of SNP
 # Finding indices of genes that are within 1,000,000 of this position
-gene.idx <- which(abs(gene.loc - gdm.annot.dt$pos) <= 1e6)
+# gene.idx <- which(abs(gene.loc - gdm.annot.dt$pos) <= 1e6)
+gene.idx <- which(abs(gene.loc - snp.hit$pos) <= 1e6 & gene.chrom == snp.hit$chrom)
 # name(s) of the genes that are within a 1Mb window from the SNP rs12243326
-gene.within1Mb <- unique(gdm.annot.dt[gene.idx,gene])
+gene.within1Mb <- unique(snp.hit[gene.idx,gene])
 gene.1MB.window <- matrix(gene.within1Mb, dimnames = list(c(), c("Gene Name")))
 kable(gene.1MB.window, caption = "Genes within a 1Mb window of SNP rs12243326") |>
 kable_styling(full_width = F, position = "center", latex_options = "hold_position")
@@ -483,10 +485,11 @@ kable_styling(full_width = F, position = "center", latex_options = "hold_positio
 # Hit SNP rs2237897
 # Looking for genes that are within 1,000,000 of this
 gene.loc <- snp.w.genes[snp == "rs2237897", pos] # location of snp
+gene.chrom <- snp.w.genes[snp == "rs2237897", chrom] # Chromosome of SNP
 # Finding indices of genes that are within 1,000,000 of this position
-gene.idx <- which(abs(gene.loc - gdm.annot.dt$pos) <= 1e6)
+gene.idx <- which(abs(gene.loc - snp.hit$pos) <= 1e6 & gene.chrom == snp.hit$chrom)
 # names of the genes that are within a 1Mb window from the SNP rs12243326
-gene.within1Mb <- unique(gdm.annot.dt[gene.idx, gene])
+gene.within1Mb <- unique(snp.hit[gene.idx, gene])
 gene.1MB.window <- matrix(gene.within1Mb, dimnames = list(c(), c("Gene Name")))
 kable(gene.1MB.window, caption = "Genes within a 1Mb window of SNP rs2237897") |>
 kable_styling(full_width = F, position = "center", latex_options = "hold_position")
